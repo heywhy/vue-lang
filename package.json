@@ -1,0 +1,14 @@
+{
+  "name": "vue-lang",
+  "version": "0.1.0",
+  "main": "out/index.js",
+  "repository": "https://github.com/heywhy/vue-lang.git",
+  "author": "atanda rasheed <atandarash@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "tsc -p .",
+    "clean": "rm -r ./out",
+    "watch": "tsc -p . -w"
+  }
+}
