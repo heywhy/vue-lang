@@ -1,0 +1,15 @@
+module app
+
+import Greet from app.greeter
+
+component Main {
+  state nigger: String
+
+  say(message: string): string {
+    return message
+  }
+
+  render(): Html {
+    return <Greet @click="come" if="">{{ say('hello') }}</Greet>
+  }
+}

@@ -1,0 +1,7 @@
+module app.component.module
+
+import app.component.Home as Homie
+import app.component.killer as Huggers
+
+const num: Html
+const constant: number = num + 10
