@@ -3,15 +3,13 @@ import { Tokenizer, Token } from "../tokenizer/tokenizer";
 import { getTokenValue, isAfterRow } from "../tokenizer/utils";
 import { TokenType } from "../tokenizer/contracts";
 import { AstNodeType, ImportNode, ModuleNodeBody, ModuleNode, ExportNode, VariableDeclarationNode, ExpressionNode, BinaryNode, ExpressionDeclarationNode } from "./contracts";
-import { isKeyword, isIdentifier, isPunctuation, isTokenValue, skipKeyword, skipPunctuation, isOperator, skipOperator, isPrimitive, tokenToNodeType } from "./helpers";
+import { isKeyword, isIdentifier, isPunctuation, isTokenValue, skipKeyword, skipPunctuation, isOperator, skipOperator, isPrimitive, tokenToNodeType, isTokenType } from "./helpers";
 
 export function parseToken(tokenizer: Tokenizer): any {
   let token = tokenizer.peek()
   switch (token.type) {
     case TokenType.Keyword:
       return parseKeyword(tokenizer)
-    case TokenType.Operator:
-      return parseOperator(tokenizer)
     case TokenType.Identifier:
       token = tokenizer.next()
       return AstNode.make(
@@ -142,22 +140,19 @@ function parseExport(tokenizer: Tokenizer) {
 
 function parseVarDeclaration(tokenizer: Tokenizer, kw: string) {
   skipKeyword(tokenizer, kw)
-  const value: ExpressionNode<VariableDeclarationNode, any> = {
-    left: {
-      type: null,
-      value: null,
-      isConstant: kw == 'const'
-    },
-    operator: undefined
+  const node: VariableDeclarationNode = {
+    type: null,
+    value: null,
+    isConstant: kw == 'const'
   }
 
   let token: Token = tokenizer.next()
   if (isIdentifier(token)) {
-    value.left.value = getTokenValue(token)
+    node.value = getTokenValue(token)
   }
   skipPunctuation(tokenizer, ':')
   if (isKeyword(tokenizer.peek()) || isIdentifier(tokenizer.peek())) {
-    value.left.type = getTokenValue(tokenizer.next())
+    node.type = getTokenValue(tokenizer.next())
   }
   token = tokenizer.peek()
   if (
@@ -165,43 +160,36 @@ function parseVarDeclaration(tokenizer: Tokenizer, kw: string) {
     !isAfterRow(tokenizer.previous(), token) &&
     isOperator(token)
   ) {
-    const node = parseToken(tokenizer)
-    if (tokenizer.peek()) {
-      value.right = parseOperator(tokenizer, node)
-    } else {
-      value.right = node
-    }
-  }
-  return AstNode.make(AstNodeType.VariableDeclaration, value)
-}
-
-type PrimitiveAstNode = AstNodeType.Identifier|AstNodeType.VariableDeclaration
-
-function parseOperator(
-  tokenizer: Tokenizer, leftNode: AstNode<PrimitiveAstNode, any>|null = null
-) {
-  const node: ExpressionNode<AstNode<any, any>, any> = {
-    left: leftNode,
-    operator: getTokenValue(tokenizer.next())
-  }
-  let token = tokenizer.peek()
-  if (isIdentifier(token) || isPrimitive(token)) {
-    node.right = parseToken(tokenizer)
-  }
-  console.log(token)
-  if (isOperator(token)) {
-    const nodeType = (leftNode &&
-      (
-        leftNode.type == AstNodeType.VariableDeclaration ||
-        leftNode.type == AstNodeType.Identifier
-      )) ? AstNodeType.Assignment : AstNodeType.Binary
-      console.log(nodeType)
-    node.right = parseOperator(
-      tokenizer, AstNode.make(nodeType, node)
+    return parseOperator(
+      tokenizer, AstNode.make(AstNodeType.VariableDeclaration, node)
     )
   }
+  return AstNode.make(AstNodeType.VariableDeclaration, node)
+}
 
-  return AstNode.make(AstNodeType.Binary, node)
+function parseOperator(
+  tokenizer: Tokenizer, leftNode: AstNode<AstNodeType, any>
+) {
+  let token = tokenizer.peek()
+  const node: ExpressionNode<AstNode<AstNodeType, any>, any> = {
+    right: null,
+    left: leftNode,
+    operator: getTokenValue(token)
+  }
+  tokenizer.next()
+  token = tokenizer.peek()
+  const nodeType = isTokenValue(tokenizer.previous(), '=')
+    ? AstNodeType.Assignment : AstNodeType.Binary
+  while (token) {
+    if (isIdentifier(token) || isPrimitive(token)) {
+      node.right = parseToken(tokenizer)
+    }
+    if (isOperator(token)) {
+      node.right = parseOperator(tokenizer, node.right)
+    }
+    token = tokenizer.peek()
+  }
+  return AstNode.make(nodeType, node)
 }
 
 function throwWithTokenValue(tokenizer: Tokenizer, token: Token) {
