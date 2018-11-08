@@ -3,5 +3,14 @@ module app.component.module
 import app.component.Home as Homie
 import app.component.killer as Huggers
 
-const num: Html
+const num: string
 const constant: number = num + 10
+let killer = num && constant > num
+
+func call(c: number? = 'love') {
+  let me: string = c
+}
+
+func killer(name?) {
+  const loki = true
+}

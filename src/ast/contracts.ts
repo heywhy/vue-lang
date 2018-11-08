@@ -1,3 +1,5 @@
+import { AstNode } from "./node";
+
 export enum AstNodeType {
   Bool = "Bool",
   Binary = "Binary",
@@ -7,6 +9,7 @@ export enum AstNodeType {
   Number = "Number",
   String = "String",
   Keyword = "Keyword",
+  Function = "Function",
   Component = "Component",
   Primitive = "Primitive",
   Assignment = "Assignment",
@@ -39,7 +42,7 @@ export interface ExportNode {
 export interface ExpressionNode<L, R> {
   left: L
   right?: R
-  operator: any
+  operator: string
 }
 
 export interface BinaryNode<L, R> extends ExpressionNode<L, R> {}
@@ -52,4 +55,11 @@ export interface VariableDeclarationNode {
   type: any
   value: any
   isConstant: boolean
+  isOptional: boolean
+}
+
+export interface FunctionDeclarationNode {
+  identifier: string
+  body: AstNode<AstNodeType, any>[]
+  arguments: AstNode<AstNodeType, any>[]
 }

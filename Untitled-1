@@ -3,6 +3,13 @@ module app
 import Greet from app.greeter
 
 component Main {
+  style {
+    .class {}
+    p {
+      color: red
+    }
+  }
+
   state nigger: String
 
   say(message: string): string {
@@ -13,3 +20,8 @@ component Main {
     return <Greet @click="come" if="">{{ say('hello') }}</Greet>
   }
 }
+
+
+#contract Kill {
+ # shoot: Gun
+#}

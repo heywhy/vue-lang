@@ -2,8 +2,9 @@ import { TokenType } from "../tokenizer/contracts";
 import { Tokenizer, Token } from "../tokenizer/tokenizer";
 import { isDeclarationKW, getTokenValue } from "../tokenizer/utils";
 import { AstNodeType } from "./contracts";
+import { Dictionary } from "..";
 
-export const OPERATOR_PRECEDENCE = {
+export const OPERATOR_PRECEDENCE: Dictionary<number> = {
   "=": 1,
   "||": 2,
   "&&": 3,

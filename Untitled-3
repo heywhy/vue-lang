@@ -1,0 +1,201 @@
+{
+  "type": "Module",
+  "definition": {
+    "body": [
+      {
+        "type": "Import",
+        "definition": {
+          "as": "Homie",
+          "path": "app.component.Home"
+        }
+      },
+      {
+        "type": "Import",
+        "definition": {
+          "as": "Huggers",
+          "path": "app.component.killer"
+        }
+      },
+      {
+        "type": "VariableDeclaration",
+        "definition": {
+          "type": "string",
+          "value": "num",
+          "isOptional": false,
+          "isConstant": true
+        }
+      },
+      {
+        "type": "Assignment",
+        "definition": {
+          "right": {
+            "type": "Binary",
+            "definition": {
+              "right": {
+                "type": "Number",
+                "definition": {
+                  "value": 10
+                }
+              },
+              "left": {
+                "type": "Identifier",
+                "definition": {
+                  "value": "num"
+                }
+              },
+              "operator": "+"
+            }
+          },
+          "left": {
+            "type": "VariableDeclaration",
+            "definition": {
+              "type": "number",
+              "value": "constant",
+              "isOptional": false,
+              "isConstant": true
+            }
+          },
+          "operator": "="
+        }
+      },
+      {
+        "type": "Assignment",
+        "definition": {
+          "right": {
+            "type": "Binary",
+            "definition": {
+              "right": {
+                "type": "Binary",
+                "definition": {
+                  "right": {
+                    "type": "Identifier",
+                    "definition": {
+                      "value": "num"
+                    }
+                  },
+                  "left": {
+                    "type": "Identifier",
+                    "definition": {
+                      "value": "constant"
+                    }
+                  },
+                  "operator": ">"
+                }
+              },
+              "left": {
+                "type": "Identifier",
+                "definition": {
+                  "value": "num"
+                }
+              },
+              "operator": "&&"
+            }
+          },
+          "left": {
+            "type": "VariableDeclaration",
+            "definition": {
+              "type": null,
+              "value": "killer",
+              "isOptional": false,
+              "isConstant": false
+            }
+          },
+          "operator": "="
+        }
+      },
+      {
+        "type": "Function",
+        "definition": {
+          "identifier": "call",
+          "body": [
+            {
+              "type": "Assignment",
+              "definition": {
+                "right": {
+                  "type": "Identifier",
+                  "definition": {
+                    "value": "c"
+                  }
+                },
+                "left": {
+                  "type": "VariableDeclaration",
+                  "definition": {
+                    "type": "string",
+                    "value": "me",
+                    "isOptional": false,
+                    "isConstant": false
+                  }
+                },
+                "operator": "="
+              }
+            }
+          ],
+          "arguments": [
+            {
+              "type": "Assignment",
+              "definition": {
+                "right": {
+                  "type": "String",
+                  "definition": {
+                    "value": "love"
+                  }
+                },
+                "left": {
+                  "type": "VariableDeclaration",
+                  "definition": {
+                    "type": "number",
+                    "value": "c",
+                    "isOptional": true,
+                    "isConstant": false
+                  }
+                },
+                "operator": "="
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Function",
+        "definition": {
+          "identifier": "killer",
+          "body": [
+            {
+              "type": "Assignment",
+              "definition": {
+                "right": {
+                  "type": "Bool",
+                  "definition": {
+                    "value": true
+                  }
+                },
+                "left": {
+                  "type": "VariableDeclaration",
+                  "definition": {
+                    "type": null,
+                    "value": "loki",
+                    "isOptional": false,
+                    "isConstant": true
+                  }
+                },
+                "operator": "="
+              }
+            }
+          ],
+          "arguments": [
+            {
+              "type": "VariableDeclaration",
+              "definition": {
+                "type": null,
+                "value": "name",
+                "isOptional": true,
+                "isConstant": false
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "path": "app.component.module"
+  }
+}

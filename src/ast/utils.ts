@@ -2,8 +2,8 @@ import { AstNode } from "./node";
 import { Tokenizer, Token } from "../tokenizer/tokenizer";
 import { getTokenValue, isAfterRow } from "../tokenizer/utils";
 import { TokenType } from "../tokenizer/contracts";
-import { AstNodeType, ImportNode, ModuleNodeBody, ModuleNode, ExportNode, VariableDeclarationNode, ExpressionNode, BinaryNode, ExpressionDeclarationNode } from "./contracts";
-import { isKeyword, isIdentifier, isPunctuation, isTokenValue, skipKeyword, skipPunctuation, isOperator, skipOperator, isPrimitive, tokenToNodeType, isTokenType } from "./helpers";
+import { AstNodeType, ImportNode, ModuleNodeBody, ModuleNode, ExportNode, VariableDeclarationNode, ExpressionNode, FunctionDeclarationNode } from "./contracts";
+import { isKeyword, isIdentifier, isPunctuation, isTokenValue, skipKeyword, skipPunctuation, isOperator, isPrimitive, tokenToNodeType, isTokenType, isBool } from "./helpers";
 
 export function parseToken(tokenizer: Tokenizer): any {
   let token = tokenizer.peek()
@@ -11,10 +11,7 @@ export function parseToken(tokenizer: Tokenizer): any {
     case TokenType.Keyword:
       return parseKeyword(tokenizer)
     case TokenType.Identifier:
-      token = tokenizer.next()
-      return AstNode.make(
-        tokenToNodeType(token), {value: getTokenValue(token)}
-      )
+      return parseIdentifier(tokenizer)
     case TokenType.Bool:
     case TokenType.String:
     case TokenType.Number:
@@ -40,6 +37,17 @@ function parseKeyword(tokenizer: Tokenizer) {
   // }
   if (isTokenValue(token, 'let') || isTokenValue(token, 'const')) {
     return parseVarDeclaration(tokenizer, getTokenValue(token))
+  }
+  if (isTokenValue(token, 'func')) {
+    return parseFunction(tokenizer)
+  }
+  if (isPrimitive(token) && !isBool(token)) {
+    const nodeType: TokenType = isTokenType(token, TokenType.String)
+      ? TokenType.Number : TokenType.String
+    return AstNode.make(nodeType, {value: getTokenValue(token)})
+  }
+  if (isBool(token)) {
+    return AstNode.make(AstNodeType.Bool, {value: getTokenValue(tokenizer.next())})
   }
 
   tokenizer.error(
@@ -138,11 +146,12 @@ function parseExport(tokenizer: Tokenizer) {
   return AstNode.make(AstNodeType.Export, def)
 }
 
-function parseVarDeclaration(tokenizer: Tokenizer, kw: string) {
+function parseVarDeclaration(tokenizer: Tokenizer, kw: any) {
   skipKeyword(tokenizer, kw)
   const node: VariableDeclarationNode = {
     type: null,
     value: null,
+    isOptional: false,
     isConstant: kw == 'const'
   }
 
@@ -158,13 +167,31 @@ function parseVarDeclaration(tokenizer: Tokenizer, kw: string) {
   if (
     token &&
     !isAfterRow(tokenizer.previous(), token) &&
-    isOperator(token)
+    (isOperator(token) || isPunctuation(token))
   ) {
-    return parseOperator(
-      tokenizer, AstNode.make(AstNodeType.VariableDeclaration, node)
-    )
+    if (isPunctuation(token) && isTokenValue(token, '?')) {
+      skipPunctuation(tokenizer, '?')
+      token = tokenizer.peek()
+      node.isOptional = true
+    }
+    if (isOperator(token)) {
+      return parseOperator(
+        tokenizer, AstNode.make(AstNodeType.VariableDeclaration, node)
+      )
+    }
   }
+
   return AstNode.make(AstNodeType.VariableDeclaration, node)
+}
+
+function parseIdentifier(tokenizer: Tokenizer) {
+  let token = tokenizer.next()
+  const node = AstNode.make(
+    tokenToNodeType(token), {value: getTokenValue(token)}
+  )
+  token = tokenizer.peek()
+  return token && isOperator(token)
+    ? parseOperator(tokenizer, node) : node
 }
 
 function parseOperator(
@@ -180,7 +207,10 @@ function parseOperator(
   token = tokenizer.peek()
   const nodeType = isTokenValue(tokenizer.previous(), '=')
     ? AstNodeType.Assignment : AstNodeType.Binary
-  while (token) {
+  while (token &&
+    !isAfterRow(tokenizer.previous(), token) &&
+    !isPunctuation(tokenizer.peek())
+  ) {
     if (isIdentifier(token) || isPrimitive(token)) {
       node.right = parseToken(tokenizer)
     }
@@ -194,4 +224,62 @@ function parseOperator(
 
 function throwWithTokenValue(tokenizer: Tokenizer, token: Token) {
   tokenizer.error(`Unexpected token found [${getTokenValue(token)}]`, token)
+}
+
+function parseFunction(tokenizer: Tokenizer) {
+  skipKeyword(tokenizer, 'func')
+  const parser = (t: Tokenizer) => parseVarDeclaration(t, null)
+
+  const identifier = getTokenValue(tokenizer.next())
+  const args = delimiters(tokenizer, '(', ')', ',', parser)
+  const node: FunctionDeclarationNode = {
+    identifier, body: [], arguments: args
+  }
+  let token = tokenizer.peek()
+  if (token && isPunctuation(token) && isTokenValue(token, '{')) {
+    node.body = delimiters(tokenizer, '{', '}', null as any, parseToken)
+  }
+  return AstNode.make(AstNodeType.Function, node)
+}
+
+function parseBlock(tokenizer: Tokenizer) {
+  const nodes: AstNode<AstNodeType, any>[] = []
+  skipPunctuation(tokenizer, '{')
+  let token = tokenizer.peek()
+  while (token) {
+    nodes.push(parseToken(tokenizer))
+  }
+  skipPunctuation(tokenizer, '}')
+  return nodes
+}
+
+function delimiters(
+  tokenizer: Tokenizer,
+  start: string,
+  stop: string,
+  separator: string,
+  parser: (t: Tokenizer) => any
+) {
+  let first = true
+  const nodes: AstNode<AstNodeType, any>[] = []
+  skipPunctuation(tokenizer, start)
+  while (!tokenizer.eof()) {
+    let token = tokenizer.peek()
+    if (isTokenType(token, TokenType.Punctuation) && isTokenValue(token, start)) {
+      break
+    }
+    if (first) {
+      first = false
+    } else {
+      skipPunctuation(tokenizer, separator)
+    }
+    if (isTokenType(token, TokenType.Punctuation) && isTokenValue(token, stop)) {
+      break
+    }
+    // console.log(token, nodes)
+    nodes.push(parser(tokenizer))
+  }
+  skipPunctuation(tokenizer, stop)
+
+  return nodes
 }

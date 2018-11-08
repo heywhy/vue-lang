@@ -1,0 +1,171 @@
+import { Tokenizer, Token, TokenType } from "../tokenizer/tokenizer";
+import { AstNode, AstNodeType, ModuleNode, ModuleNodeBody, ImportNode, ExportNode, ExpressionNode } from "./node";
+import { getTokenValue, isDeclarationKW } from "../tokenizer/utils";
+
+function chopNext(tokenizer: Tokenizer) {
+  tokenizer.next()
+  return tokenizer
+}
+
+function isKeyword(token: Token, declaration: boolean = false) {
+  return !declaration
+    ? isTokenType(token, TokenType.Keyword)
+    : isTokenType(token, TokenType.Keyword) && isDeclarationKW(getTokenValue(token))
+}
+
+function isTokenType(token: Token, type: TokenType) {
+  return token.type === type
+}
+
+function isIdentifier(token: Token) {
+  return isTokenType(token, TokenType.Identifier)
+}
+
+function isTokenValue(token: Token, value: any) {
+  return token.value == value
+}
+
+function isPunctuation(token: Token) {
+  return isTokenType(token, TokenType.Punctuation)
+}
+
+function skipKeyword(tokenizer: Tokenizer, value: any) {
+  const token: Token = tokenizer.peek()
+  if (isKeyword(token) && isTokenValue(token, value)) {
+    chopNext(tokenizer)
+  }
+  return tokenizer
+}
+
+export function parseToken(tokenizer: Tokenizer): any {
+  const token = tokenizer.peek()
+  if (isKeyword(token)) {
+    return parseKeyword(tokenizer)
+  }
+  return AstNode.make(AstNodeType.Assignment, '')
+}
+
+
+function parseKeyword(tokenizer: Tokenizer) {
+  const token: Token = tokenizer.peek()
+  if (isTokenValue(token, 'module')) {
+    return parseModule(tokenizer)
+  }
+  if (isTokenValue(token, 'import')) {
+    return parseImport(tokenizer)
+  }
+  if (isTokenValue(token, 'export')) {
+    return parseExport(tokenizer)
+  }
+  if (isTokenValue(token, 'let') || isTokenValue(token, 'const')) {
+    return parseVarDeclaration(tokenizer)
+  }
+
+  tokenizer.error(
+    `Unexpected token found after keyword. ${getTokenValue(token)}`, token
+  )
+}
+
+function parseImport(tokenizer: Tokenizer) {
+  tokenizer = skipKeyword(tokenizer, 'import')
+  let token = tokenizer.peek()
+  let path = ''
+  let as = null
+
+  while (token) {
+    console.log(isKeyword(token), {value: token.value, type: token.type})
+    // if the keyword is a declaration keyword
+    // if (isKeyword(token, true)) {
+    //   break
+    // }
+    // if (isKeyword(token, true)) {
+    //   break
+    // }
+    if (!isIdentifier(token) && !isPunctuation(token)) {
+      tokenizer.error(`Expected path`, token)
+    }
+    token = tokenizer.next()
+    if (isTokenValue(token, 'as') && !isPunctuation(tokenizer.previous())) {
+      const nameToken = tokenizer.next()
+      if (nameToken && isIdentifier(nameToken)) {
+        as = getTokenValue(nameToken)
+        break
+      } else {
+        const value = nameToken && getTokenValue(nameToken)
+        tokenizer.error(`Expected an identifier but got [${value || ''}]`)
+      }
+      const value = (nameToken && getTokenValue(nameToken)) || 'nothing'
+      tokenizer.error(`Expected and identifier but got [${value}]`)
+    }
+    path += getTokenValue(token)
+    token = tokenizer.peek()
+  }
+
+  let value: ImportNode = {as, path}
+
+  return AstNode.make(AstNodeType.Import, value)
+}
+
+function parseModule(tokenizer: Tokenizer) {
+  tokenizer = skipKeyword(tokenizer, 'module')
+  let token: Token = tokenizer.peek()
+  let tokens = []
+  let starting = true
+  let path: string = ''
+  while (token) {
+    console.log(isKeyword(token), {value: token.value, type: token.type})
+    if (!isIdentifier(token) && !isPunctuation(token)) {
+      const tokenValue = getTokenValue(token)
+      tokenizer.error(`Unexpected token found after keyword module: [${tokenValue}]`, token)
+    }
+    token = tokenizer.next()
+    if (starting) {
+      starting = false
+      if (!isIdentifier(token)) {
+        tokenizer.error('Expected an identifier after module keyword', token)
+      }
+    }
+    tokens.push(token)
+    path += getTokenValue(token)
+    token = tokenizer.peek()
+  }
+  const body: ModuleNodeBody[] = []
+
+  while (!tokenizer.eof()) {
+    body.push(parseToken(tokenizer))
+  }
+  const value: ModuleNode = {body, path}
+
+  return AstNode.make(AstNodeType.Module, value,)
+}
+
+
+function parseExport(tokenizer: Tokenizer) {
+  skipKeyword(tokenizer, 'export')
+  let value: any = null
+  if (tokenizer.peek()) {
+    value = parseToken(tokenizer)
+  }
+
+  const def: ExportNode = {value}
+
+  return AstNode.make(AstNodeType.Export, def)
+}
+
+function parseVarDeclaration(tokenizer: Tokenizer) {
+  skipKeyword(tokenizer, 'let')
+  skipKeyword(tokenizer, 'const')
+
+  const idToken = tokenizer.next()
+  if (!isIdentifier(idToken)) {
+
+  }
+
+  const val: ExpressionNode = {
+    left: null,
+    right: null,
+    operator: null
+  }
+
+  return AstNode.make(AstNodeType.Statement, val)
+}

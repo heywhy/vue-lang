@@ -11,7 +11,9 @@ const keywords = [
   'break', 'case', 'try', 'catch', 'for', 'throw',
   'continue', 'do', 'instanceof', 'new', 'while',
   //
-  'any', 'string', 'number', 'bool'
+  'any', 'string', 'number', 'bool',
+  //
+  'func'
 ]
 
 const declarationKW = ['let', 'const']
@@ -19,7 +21,7 @@ const declarationKW = ['let', 'const']
 export const isDeclarationKW = map(declarationKW.join(','))
 export const isKeyword = map(keywords.concat(...declarationKW).join(','))
 
-export const isPunctuation = map('.,@,:,(,),{,},[,],;', [','])
+export const isPunctuation = map('.,@,:,(,),{,},[,],;,?', [','])
 
 export const isOperator = map('+,-,*,/,%,=,&,|,<,>,!')
 
