@@ -1,6 +1,7 @@
 import { Stream } from "../stream"
 import { isKeyword, isPunctuation, isOperator, isComment, isWhitespace, skipComments, isDigit, isIdentifierStart, isIdentifier, readWhile, readEscaped } from './utils'
-import { TokenType, TokenPosition, IToken } from "./contracts";
+import { TokenPosition, IToken } from "./contracts";
+import { TokenType } from './token-type';
 
 
 export class Token implements IToken {
@@ -12,7 +13,7 @@ export class Token implements IToken {
   ) {
   }
 
-  public static make(char: string|number, type: TokenType, position: TokenPosition) {
+  public static make(char: string | number, type: TokenType, position: TokenPosition) {
     return new Token(char, type, position)
   }
 }
@@ -22,7 +23,7 @@ export class Tokenizer {
   protected _current?: any = null
   protected _last?: any = null
 
-  constructor(protected _stream: Stream) {}
+  constructor(protected _stream: Stream) { }
 
   getStream() {
     return this._stream
@@ -60,7 +61,7 @@ export class Tokenizer {
       const formattedMessage = `
         [message]: ${message}
         [line]: ${token.position.row}
-        [column]: ${token.position.column -  token.value.length}
+        [column]: ${token.position.column - token.value.length}
       `
       this.getStream().error(formattedMessage, ...args)
     }
@@ -68,7 +69,7 @@ export class Tokenizer {
   }
 }
 
-function readNext(tokenizer: Tokenizer): Token|null {
+function readNext(tokenizer: Tokenizer): Token | null {
   readWhile(tokenizer, isWhitespace)
   const stream = tokenizer.getStream()
   if (stream.eof()) {

@@ -1,0 +1,14 @@
+module app.component;
+
+import Index from app.component;
+
+component Main {
+    showToobar() {}
+    
+    render {
+	Index(onLogin: showToolbar)
+        div(class='app', id='app1') {
+            div { 'hello' }
+        }
+    }
+}
