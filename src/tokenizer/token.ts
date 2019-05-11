@@ -1,16 +1,12 @@
 import { TokenType } from "./token-type";
 
 export class Token {
-  readonly type: TokenType;
-  readonly lexeme: string;
-  readonly literal: any;
-  readonly line: number;
 
-  constructor(type: TokenType, lexeme: string, literal: any, line: number) {
-    this.type = type;
-    this.lexeme = lexeme;
-    this.literal = literal;
-    this.line = line;
+  constructor(
+    public readonly type: TokenType,
+    public readonly lexeme: string,
+    public readonly literal: any,
+    public readonly line: number) {
   }
 
   toString() {

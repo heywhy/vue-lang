@@ -78,6 +78,15 @@ export class Scanner {
         if (this.match('/')) {
           // A comment goes until the end of the line.
           while (this.peek() != '\n' && !this.isAtEnd()) this.advance();
+        } else if (this.match('*')) {
+          while (
+            !(this.peek() == '*' && this.match('*') &&
+              this.peek() == '/' && this.match('/') &&
+              this.peek() == '\n') && !this.isAtEnd()) {
+            // increase the line if the current character is newline.
+            if (this.peek() == '\n') this.line++;
+            this.advance();
+          }
         } else {
           this.addToken(TokenType.SLASH);
         }
@@ -104,7 +113,7 @@ export class Scanner {
           this.number();
         } else if (this.isAlpha(char)) {
           this.identifier();
-        }  else {
+        } else {
           Log.error(this.line, "Unexpected character.");
         }
         break;
@@ -187,15 +196,15 @@ export class Scanner {
     // See if the identifier is a reserved word.
     const text: string = this.source.substring(this.start, this.current);
 
-    let type: TokenType  = keywords.get(text) as TokenType;
+    let type: TokenType = keywords.get(text) as TokenType;
     if (type == null) type = TokenType.IDENTIFIER;
     this.addToken(type);
   }
 
   private isAlpha(char: string) {
     return (char >= 'a' && char <= 'z') ||
-           (char >= 'A' && char <= 'Z') ||
-            char == '_';
+      (char >= 'A' && char <= 'Z') ||
+      char == '_';
   }
 
   private isAlphaNumeric(char: string) {
