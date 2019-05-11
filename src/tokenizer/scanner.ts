@@ -9,6 +9,7 @@ export class Scanner {
   private start: number = 0;
   private current: number = 0;
   private line: number = 1;
+  private column: number = 1;
 
   constructor(source: string) {
     this.source = source;
@@ -21,7 +22,7 @@ export class Scanner {
       this.scanToken();
     }
 
-    this.tokens.push(new Token(TokenType.EOF, '', null, this.line));
+    this.tokens.push(new Token(TokenType.EOF, '', null, this.line, this.column));
     return this.tokens;
   }
 
@@ -109,7 +110,7 @@ export class Scanner {
         } else if (this.isAlpha(char)) {
           this.identifier();
         } else {
-          Log.error(this.line, "Unexpected character.");
+          Log.error(this.line, this.column, 'Unexpected character.');
         }
         break;
     }
@@ -123,7 +124,7 @@ export class Scanner {
 
     // Unterminated string.
     if (this.isAtEnd()) {
-      Log.error(this.line, "Unterminated string.");
+      Log.error(this.line, this.column, "Unterminated string.");
       return;
     }
 
@@ -137,7 +138,10 @@ export class Scanner {
 
   private advance() {
     this.current++;
-    return this.source.charAt(this.current - 1);
+    this.column++
+    const char = this.source.charAt(this.current - 1);
+    if (char == '\n') this.column = 1
+    return char
   }
 
   private addToken(type: TokenType) {
@@ -146,7 +150,7 @@ export class Scanner {
 
   private pushToken(type: TokenType, literal: any) {
     const text: string = this.source.substring(this.start, this.current);
-    this.tokens.push(new Token(type, text, literal, this.line));
+    this.tokens.push(new Token(type, text, literal, this.line, this.column));
   }
 
   private match(expected: string) {

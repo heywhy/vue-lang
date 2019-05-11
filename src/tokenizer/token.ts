@@ -6,7 +6,8 @@ export class Token {
     public readonly type: TokenType,
     public readonly lexeme: string,
     public readonly literal: any,
-    public readonly line: number) {
+    public readonly line: number,
+    public readonly column: number) {
   }
 
   toString() {

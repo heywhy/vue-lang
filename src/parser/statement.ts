@@ -86,6 +86,33 @@ export class ForStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitForStmt(this);
+    return null as any;
+  }
+}
+
+export class FunctionStmt extends Statement {
+  constructor(
+    public readonly name: Token,
+    public readonly params: Token[],
+    public readonly body: Statement[]
+  ) {
+    super()
+  }
+
+  accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitFunctionStmt(this);
+  }
+}
+
+export class ReturnStmt extends Statement {
+  constructor(
+    public readonly keyword: Token,
+    public readonly value: Expression
+  ) {
+    super()
+  }
+
+  accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitReturnStmt(this);
   }
 }

@@ -1,11 +1,10 @@
-/**
- ** apas */* asa
- */
+fun hello(arg) {
+  var arg = "first";
+  var name = "as";
+  print arg;
+  return "asdf";
+}
 
-//class App {}
+print hello("Momo");
 
-//fun a() {
-  //return 1 + 2
-//}
-
-3+12*90
+//print hello;

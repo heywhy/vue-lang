@@ -1,8 +1,8 @@
-import { Visitor, StmtVisitor } from "./visitor";
+import { ExprVisitor, StmtVisitor } from "./visitor";
 import { Expression, BinaryExpression, UnaryExpression, GroupingExpression, LiteralExpression, VariableExpression } from "../parser/expression";
 import { Statement, PrintStmt } from "../parser/statement";
 
-export class AstPrinter implements Visitor<string> {
+export class AstPrinter implements ExprVisitor<string> {
   print(stmts: Statement[]) {
     const vals: string[] = []
     stmts.forEach(stmt => vals.push(stmt.accept(this)))

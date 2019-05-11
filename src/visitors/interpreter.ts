@@ -1,14 +1,21 @@
-import { Visitor, StmtVisitor } from './visitor'
-import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression } from '../parser/expression';
+import { ExprVisitor, StmtVisitor } from './visitor'
+import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression } from '../parser/expression';
 import { TokenType } from '../tokenizer/token-type';
 import { Log } from '../tokenizer/logger';
 import { Token } from '../tokenizer/token';
-import { RuntimeError } from '../errors';
-import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt } from '../parser/statement';
+import { RuntimeError, ReturnError } from '../errors';
+import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt } from '../parser/statement';
 import { Environment } from '../environment';
+import { Callable } from './callable';
 
-export class Interpreter implements Visitor<Object>, StmtVisitor<void> {
-  private environment = new Environment()
+export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
+  public readonly globals = new Environment()
+  private environment = this.globals;
+  private readonly locals: Map<Expression, number> = new Map()
+
+  resolve(expr: Expression, depth: number) {
+    this.locals.set(expr, depth);
+  }
 
   interpret(statements: Statement[]) {
     try {
@@ -25,6 +32,12 @@ export class Interpreter implements Visitor<Object>, StmtVisitor<void> {
 
   visitExpressionStmt(stmt: ExpressionStmt) {
     this.evaluate(stmt.expression);
+  }
+
+  visitFunctionStmt(stmt: FunctionStmt) {
+    const callable = new Callable(stmt, this.environment);
+    this.environment.define(stmt.name.lexeme, callable);
+    return null;
   }
 
   visitIfStmt(stmt: IfStmt) {
@@ -53,6 +66,29 @@ export class Interpreter implements Visitor<Object>, StmtVisitor<void> {
     this.environment.define(stmt.name.lexeme, value);
   }
 
+  visitReturnStmt(stmt: ReturnStmt) {
+    let value = null;
+    if (stmt.value != null) value = this.evaluate(stmt.value);
+
+    throw new ReturnError(value);
+  }
+
+  visitCallExpr(expr: CallExpression): any {
+    const callee = this.evaluate(expr.callee);
+
+    const args: Object[] = []
+    expr.args.forEach(ex => args.push(this.evaluate(ex)))
+    if (!(callee instanceof Callable)) {
+      throw new RuntimeError(expr.paren, 'Can only call functions and classes.')
+    }
+    const callable = callee as Callable;
+    if (args.length != callee.arity) {
+      throw new RuntimeError(expr.paren,
+        `Expected ${callee.arity} arguments but got ${args.length}.`);
+    }
+    return callable.invoke(this, args);
+  }
+
   visitLogicalExpr(expr: LogicalExpression) {
     const left = this.evaluate(expr.left);
 
@@ -67,13 +103,17 @@ export class Interpreter implements Visitor<Object>, StmtVisitor<void> {
 
   visitAssignExpr(expr: AssignExpression) {
     const value = this.evaluate(expr.value);
-
-    this.environment.assign(expr.name, value);
+    const distance = this.locals.get(expr);
+    if (distance != null) {
+      this.environment.assignAt(distance, expr.name, value);
+    } else {
+      this.globals.assign(expr.name, value);
+    }
     return value;
   }
 
   visitVariableExpr(expr: VariableExpression) {
-    return this.environment.get(expr.name) as any
+    return this.lookUpVariable(expr.name, expr)
   }
 
   visitGroupingExpr(expr: GroupingExpression) {
@@ -140,11 +180,20 @@ export class Interpreter implements Visitor<Object>, StmtVisitor<void> {
     return null as any
   }
 
+  private lookUpVariable(name: Token, expr: VariableExpression) {
+    const distance = this.locals.get(expr);
+    if (distance != null) {
+      return this.environment.getAt(distance, name.lexeme);
+    } else {
+      return this.globals.get(name);
+    }
+  }
+
   private execute(stmt: Statement) {
     stmt.accept(this);
   }
 
-  private executeBlock(statements: Statement[], environment: Environment) {
+  public executeBlock(statements: Statement[], environment: Environment) {
     const previous = this.environment;
     try {
       this.environment = environment;

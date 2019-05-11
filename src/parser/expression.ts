@@ -1,8 +1,8 @@
 import { Token } from "../tokenizer/token";
-import { Visitor } from "../visitors/visitor";
+import { ExprVisitor } from "../visitors/visitor";
 
 export abstract class Expression {
-  abstract accept<R>(visitor: Visitor<R>): R;
+  abstract accept<R>(visitor: ExprVisitor<R>): R;
 }
 
 export class BinaryExpression extends Expression {
@@ -13,7 +13,7 @@ export class BinaryExpression extends Expression {
     super();
   }
 
-  accept<R>(visitor: Visitor<R>): R {
+  accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitBinaryExpr(this);
   }
 }
@@ -26,7 +26,7 @@ export class UnaryExpression extends Expression {
     super();
   }
 
-  accept<R>(visitor: Visitor<R>): R {
+  accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitUnaryExpr(this);
   }
 }
@@ -36,7 +36,7 @@ export class GroupingExpression extends Expression {
     super();
   }
 
-  accept<R>(visitor: Visitor<R>): R {
+  accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitGroupingExpr(this);
   }
 }
@@ -47,7 +47,7 @@ export class LiteralExpression extends Expression {
     super();
   }
 
-  accept<R>(visitor: Visitor<R>): R {
+  accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitLiteralExpr(this);
   }
 }
@@ -57,7 +57,7 @@ export class VariableExpression extends Expression {
     super();
   }
 
-  accept<R>(visitor: Visitor<R>): R {
+  accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitVariableExpr(this);
   }
 }
@@ -69,7 +69,7 @@ export class AssignExpression extends Expression {
     super();
   }
 
-  accept<R>(visitor: Visitor<R>): R {
+  accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitAssignExpr(this);
   }
 }
@@ -82,7 +82,20 @@ export class LogicalExpression extends Expression {
     super();
   }
 
-  accept<R>(visitor: Visitor<R>): R {
+  accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitLogicalExpr(this);
+  }
+}
+
+export class CallExpression extends Expression {
+  constructor(
+    public readonly callee: Expression,
+    public readonly paren: Token,
+    public readonly args: Expression[]) {
+    super();
+  }
+
+  accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitCallExpr(this);
   }
 }

@@ -1,9 +1,9 @@
 import { Token } from "../tokenizer/token";
-import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression } from "./expression";
+import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression } from "./expression";
 import { TokenType } from "../tokenizer/token-type";
 import { Log } from "../tokenizer/logger";
 import { ParseError } from '../errors'
-import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt } from "./statement";
+import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt } from "./statement";
 
 export class Parser {
 
@@ -21,6 +21,7 @@ export class Parser {
 
   private declaration() {
     try {
+      if (this.match(TokenType.FUN)) return this.functionDeclaration('function');
       if (this.match(TokenType.VAR)) return this.varDeclaration();
 
       return this.statement();
@@ -28,6 +29,25 @@ export class Parser {
       this.synchronize();
       return null;
     }
+  }
+
+  private functionDeclaration(type: string) {
+    const name = this.consume(TokenType.IDENTIFIER, `Expect ${type} name.`);
+    this.consume(TokenType.LEFT_PAREN, `Expect '(' after ${type} name.`);
+    const parameters: Token[] = []
+    if (!this.check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (parameters.length >= 8) {
+          this.error(this.peek(), "Cannot have more than 8 parameters.");
+        }
+
+        parameters.push(this.consume(TokenType.IDENTIFIER, "Expect parameter name."));
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+    this.consume(TokenType.LEFT_BRACE, `Expect '{' before ${type} body.`);
+    const body = this.block();
+    return new FunctionStmt(name, parameters, body);
   }
 
   private varDeclaration() {
@@ -48,8 +68,20 @@ export class Parser {
     if (this.match(TokenType.WHILE)) return this.whileStatement()
     if (this.match(TokenType.IF)) return this.ifStatement()
     if (this.match(TokenType.PRINT)) return this.printStatement()
+    if (this.match(TokenType.RETURN)) return this.returnStatement()
     if (this.match(TokenType.LEFT_BRACE)) return new BlockStmt(this.block())
     return this.expressionStatement()
+  }
+
+  private returnStatement() {
+    const keyword = this.previous();
+    let value!: Expression;
+    if (!this.check(TokenType.SEMICOLON)) {
+      value = this.expression();
+    }
+
+    this.consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+    return new ReturnStmt(keyword, value);
   }
 
   private forStatement() {
@@ -231,7 +263,32 @@ export class Parser {
       return new UnaryExpression(operator, right);
     }
 
-    return this.primary() as Expression;
+    return this.call() as Expression;
+  }
+
+  private call() {
+    let expr:  Expression = this.primary()
+    while (true) {
+      if (this.match(TokenType.LEFT_PAREN)) {
+        expr = this.finishCall(expr);
+      } else {
+        break;
+      }
+    }
+    return expr;
+  }
+
+  private finishCall(callee: Expression) {
+    const args = [];
+    if (!this.check(TokenType.RIGHT_PAREN)) {
+      do {
+        args.push(this.expression());
+      } while (this.match(TokenType.COMMA));
+    }
+
+    const paren = this.consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
+
+    return new CallExpression(callee, paren, args);
   }
 
   private primary() {
