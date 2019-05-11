@@ -1,9 +1,24 @@
-import { Visitor } from "./visitor";
-import { Expression, BinaryExpression, UnaryExpression, GroupingExpression, LiteralExpression } from "./expression";
+import { Visitor, StmtVisitor } from "./visitor";
+import { Expression, BinaryExpression, UnaryExpression, GroupingExpression, LiteralExpression, VariableExpression } from "../parser/expression";
+import { Statement, PrintStmt } from "../parser/statement";
 
 export class AstPrinter implements Visitor<string> {
-  print(expr: Expression) {
-    return expr.accept(this);
+  print(stmts: Statement[]) {
+    const vals: string[] = []
+    stmts.forEach(stmt => vals.push(stmt.accept(this)))
+    return vals.join('\n');
+  }
+
+  visitVariableExpr(expr: VariableExpression) {
+    return '';
+  }
+
+  visitPrintStmt(stmt: PrintStmt) {
+    return stmt.expression.accept(this)
+  }
+
+  visitExpressionStmt(stmt: PrintStmt) {
+    return stmt.expression.accept(this)
   }
 
   visitBinaryExpr(expr: BinaryExpression) {

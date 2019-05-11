@@ -103,11 +103,6 @@ export class Scanner {
       case '\n':
         this.line++;
         break;
-      case 'o':
-        if (this.peek() == 'r') {
-          this.addToken(TokenType.OR);
-        }
-        break;
       default:
         if (this.isDigit(char)) {
           this.number();
