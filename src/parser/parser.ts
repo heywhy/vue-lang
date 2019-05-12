@@ -1,9 +1,9 @@
 import { Token } from "../tokenizer/token";
-import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression } from "./expression";
+import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression } from "./expression";
 import { TokenType } from "../tokenizer/token-type";
 import { Log } from "../tokenizer/logger";
 import { ParseError } from '../errors'
-import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt } from "./statement";
+import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt } from "./statement";
 
 export class Parser {
 
@@ -21,6 +21,7 @@ export class Parser {
 
   private declaration() {
     try {
+      if (this.match(TokenType.CLASS)) return this.classDeclaration()
       if (this.match(TokenType.FUN)) return this.functionDeclaration('function');
       if (this.match(TokenType.VAR)) return this.varDeclaration();
 
@@ -29,6 +30,20 @@ export class Parser {
       this.synchronize();
       return null;
     }
+  }
+
+  private classDeclaration() {
+    const name = this.consume(TokenType.IDENTIFIER, 'Expect class name.');
+    this.consume(TokenType.LEFT_BRACE, `Expect '{' after class.`)
+
+    const methods: FunctionStmt[] = [];
+    while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+      methods.push(this.functionDeclaration("method"));
+    }
+
+    this.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
+
+    return new ClassStmt(name, methods);
   }
 
   private functionDeclaration(type: string) {
@@ -176,6 +191,9 @@ export class Parser {
       if (expr instanceof VariableExpression) {
         const name = (<VariableExpression>expr).name;
         return new AssignExpression(name, value);
+      } else if (expr instanceof GetExpression) {
+        const get = expr;
+        return new SetExpression(get.object, get.name, value);
       }
 
       this.error(equals, 'Invalid assignment target.');
@@ -267,10 +285,13 @@ export class Parser {
   }
 
   private call() {
-    let expr:  Expression = this.primary()
+    let expr: Expression = this.primary()
     while (true) {
       if (this.match(TokenType.LEFT_PAREN)) {
         expr = this.finishCall(expr);
+      } else if (this.match(TokenType.DOT)) {
+        const name = this.consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+        expr = new GetExpression(expr, name);
       } else {
         break;
       }
@@ -299,6 +320,8 @@ export class Parser {
     if (this.match(TokenType.NUMBER, TokenType.STRING)) {
       return new LiteralExpression(this.previous().literal);
     }
+
+    if (this.match(TokenType.THIS)) return new ThisExpression(this.previous())
 
     if (this.match(TokenType.IDENTIFIER)) {
       return new VariableExpression(this.previous())

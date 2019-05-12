@@ -116,3 +116,16 @@ export class ReturnStmt extends Statement {
     return visitor.visitReturnStmt(this);
   }
 }
+
+export class ClassStmt extends Statement {
+  constructor(
+    public readonly name: Token,
+    public readonly body: FunctionStmt[]
+  ) {
+    super()
+  }
+
+  accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitClassStmt(this);
+  }
+}

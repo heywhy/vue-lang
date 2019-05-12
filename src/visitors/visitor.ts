@@ -1,8 +1,11 @@
-import { BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression } from "../parser/expression";
-import { PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, ForStmt, FunctionStmt, ReturnStmt } from "../parser/statement";
+import { BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression } from "../parser/expression";
+import { PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, ForStmt, FunctionStmt, ReturnStmt, ClassStmt } from "../parser/statement";
 
 export interface ExprVisitor<R> {
+  visitSetExpr(expr: SetExpression): R;
+  visitGetExpr(expr: GetExpression): R;
   visitCallExpr(expr: CallExpression): R;
+  visitThisExpr(expr: ThisExpression): R;
   visitUnaryExpr(expr: UnaryExpression): R;
   visitAssignExpr(expr: AssignExpression): R;
   visitBinaryExpr(expr: BinaryExpression): R;
@@ -17,6 +20,7 @@ export interface StmtVisitor<R> {
   visitVarStmt(stmt: VarStmt): R;
   visitBlockStmt(stmt: BlockStmt): R;
   visitPrintStmt(stmt: PrintStmt): R;
+  visitClassStmt(stmt: ClassStmt): R;
   visitWhileStmt(stmt: WhileStmt): R;
   visitReturnStmt(stmt: ReturnStmt): R;
   visitFunctionStmt(stmt: FunctionStmt): R;

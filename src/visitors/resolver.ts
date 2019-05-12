@@ -1,17 +1,38 @@
 import { ExprVisitor, StmtVisitor } from "./visitor";
 import { Interpreter } from "./interpreter";
-import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt } from "../parser/statement";
-import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression } from "../parser/expression";
+import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt } from "../parser/statement";
+import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression } from "../parser/expression";
 import { Token } from "../tokenizer/token";
 import { Stack } from "../uitls/stack";
 import { Log } from "../tokenizer/logger";
-import { FunctionType } from "./types";
+import { FunctionType, ClassType } from "./types";
 
 export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   private readonly scopes: Stack<Map<string, boolean>> = new Stack()
   private currentFunction: FunctionType = FunctionType.NONE
+  private currentClass: ClassType = ClassType.NONE
 
   constructor(private readonly interpreter: Interpreter) { }
+
+  visitClassStmt(stmt: ClassStmt) {
+    const enclosingClass = this.currentClass;
+    this.currentClass = ClassType.CLASS;
+
+    this.declare(stmt.name)
+    this.define(stmt.name)
+
+    this.beginScope()
+    this.scopes.peek().set('this', true)
+    stmt.body.forEach(field => {
+      let decl = FunctionType.METHOD
+      if (field.name.lexeme == stmt.name.lexeme) {
+        decl = FunctionType.INITIALIZER
+      }
+      this.resolveFunction(field, decl)
+    })
+    this.endScope()
+    this.currentClass = enclosingClass
+  }
 
   visitBlockStmt(stmt: BlockStmt) {
     this.beginScope();
@@ -25,6 +46,14 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
       this.resolveExpr(stmt.initializer);
     }
     this.define(stmt.name);
+  }
+
+  visitThisExpr(expr: ThisExpression) {
+    if (this.currentClass == ClassType.NONE) {
+      Log.syntaxError(expr.keyword, "Cannot use 'this' outside of a class.");
+      return;
+    }
+    this.resolveLocal(expr, expr.keyword)
   }
 
   visitVariableExpr(expr: VariableExpression) {
@@ -67,6 +96,9 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
       Log.syntaxError(stmt.keyword, 'Cannot return from top-level code.');
     }
     if (stmt.value != null) {
+      if (this.currentFunction == FunctionType.INITIALIZER) {
+        Log.syntaxError(stmt.keyword, 'Cannot return a value from an initializer.')
+      }
       this.resolveExpr(stmt.value);
     }
   }
@@ -74,6 +106,15 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   visitWhileStmt(stmt: WhileStmt) {
     this.resolveExpr(stmt.condition);
     this.resolveStmt(stmt.body);
+  }
+
+  visitSetExpr(expr: SetExpression) {
+    this.resolveExpr(expr.value);
+    this.resolveExpr(expr.object);
+  }
+
+  visitGetExpr(expr: GetExpression) {
+    this.resolveExpr(expr.object)
   }
 
   visitBinaryExpr(expr: BinaryExpression) {

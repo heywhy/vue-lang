@@ -99,3 +99,38 @@ export class CallExpression extends Expression {
     return visitor.visitCallExpr(this);
   }
 }
+
+export class GetExpression extends Expression {
+  constructor(
+    public readonly object: Expression,
+    public readonly name: Token) {
+    super();
+  }
+
+  accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitGetExpr(this);
+  }
+}
+
+export class SetExpression extends Expression {
+  constructor(
+    public readonly object: Expression,
+    public readonly name: Token,
+    public readonly value: Expression) {
+    super();
+  }
+
+  accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitSetExpr(this);
+  }
+}
+
+export class ThisExpression extends Expression {
+  constructor(public readonly keyword: Token) {
+    super()
+  }
+
+  accept<R>(visitor: ExprVisitor<R>) {
+    return visitor.visitThisExpr(this)
+  }
+}

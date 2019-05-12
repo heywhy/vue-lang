@@ -1,17 +1,23 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
-import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression } from '../parser/expression';
+import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression } from '../parser/expression';
 import { TokenType } from '../tokenizer/token-type';
 import { Log } from '../tokenizer/logger';
 import { Token } from '../tokenizer/token';
 import { RuntimeError, ReturnError } from '../errors';
-import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt } from '../parser/statement';
+import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt } from '../parser/statement';
 import { Environment } from '../environment';
-import { Callable } from './callable';
+import { LangCallable, LangClass, ClassInstance, Callable, NativeFn } from './callable';
 
 export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   public readonly globals = new Environment()
   private environment = this.globals;
   private readonly locals: Map<Expression, number> = new Map()
+
+  constructor() {
+    this.globals.define('clock', new NativeFn(() => {
+      return Date.now() / 1000
+    }, 'clock'))
+  }
 
   resolve(expr: Expression, depth: number) {
     this.locals.set(expr, depth);
@@ -25,6 +31,18 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     }
   }
 
+  visitClassStmt(stmt: ClassStmt) {
+    this.environment.define(stmt.name.lexeme, null);
+    const fields: Map<string, Callable> = new Map()
+    stmt.body.forEach(stmt1 => {
+      const isInitializer = stmt1.name.lexeme == stmt.name.lexeme
+      const callable = new LangCallable(stmt1, this.environment, isInitializer);
+      fields.set(stmt1.name.lexeme, callable);
+    })
+    const klass = new LangClass(stmt.name.lexeme, fields);
+    this.environment.assign(stmt.name, klass);
+  }
+
   visitPrintStmt(stmt: PrintStmt) {
     const value = this.evaluate(stmt.expression)
     console.log(this.stringify(value))
@@ -35,9 +53,8 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   }
 
   visitFunctionStmt(stmt: FunctionStmt) {
-    const callable = new Callable(stmt, this.environment);
+    const callable = new LangCallable(stmt, this.environment, false);
     this.environment.define(stmt.name.lexeme, callable);
-    return null;
   }
 
   visitIfStmt(stmt: IfStmt) {
@@ -73,6 +90,31 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     throw new ReturnError(value);
   }
 
+  visitThisExpr(expr: ThisExpression) {
+    return this.lookUpVariable(expr.keyword, expr)
+  }
+
+  visitSetExpr(expr: SetExpression) {
+    const object = this.evaluate(expr.object);
+
+    if (!(object instanceof ClassInstance)) {
+      throw new RuntimeError(expr.name, 'Only instances have fields.');
+    }
+
+    const value = this.evaluate(expr.value);
+    object.set(expr.name, value);
+    return value;
+  }
+
+  visitGetExpr(expr: GetExpression) {
+    const ob = this.evaluate(expr.object);
+    if (ob instanceof ClassInstance) {
+      return ob.get(expr.name);
+    }
+
+    throw new RuntimeError(expr.name, 'Only instances have properties.');
+  }
+
   visitCallExpr(expr: CallExpression): any {
     const callee = this.evaluate(expr.callee);
 
@@ -81,7 +123,7 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     if (!(callee instanceof Callable)) {
       throw new RuntimeError(expr.paren, 'Can only call functions and classes.')
     }
-    const callable = callee as Callable;
+    const callable = callee as LangCallable;
     if (args.length != callee.arity) {
       throw new RuntimeError(expr.paren,
         `Expected ${callee.arity} arguments but got ${args.length}.`);
@@ -180,7 +222,7 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     return null as any
   }
 
-  private lookUpVariable(name: Token, expr: VariableExpression) {
+  private lookUpVariable(name: Token, expr: VariableExpression|ThisExpression) {
     const distance = this.locals.get(expr);
     if (distance != null) {
       return this.environment.getAt(distance, name.lexeme);

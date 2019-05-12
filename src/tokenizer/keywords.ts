@@ -3,10 +3,11 @@ import { TokenType } from "./token-type";
 export const keywords = new Map<string, TokenType>();
 
 keywords.set('and',    TokenType.AND);
+keywords.set('static', TokenType.STATIC);
 keywords.set('class',  TokenType.CLASS);
-keywords.set('import',  TokenType.IMPORT);
-keywords.set('expose',  TokenType.EXPOSE);
-keywords.set('module',  TokenType.MODULE);
+keywords.set('import', TokenType.IMPORT);
+keywords.set('expose', TokenType.EXPOSE);
+keywords.set('module', TokenType.MODULE);
 keywords.set('else',   TokenType.ELSE);
 keywords.set('false',  TokenType.FALSE);
 keywords.set('for',    TokenType.FOR);

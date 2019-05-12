@@ -9,6 +9,22 @@ import { Interpreter } from '../visitors/interpreter';
 import { Resolver } from '../visitors/resolver';
 import { Log } from '../tokenizer/logger';
 
+let interpreter: Interpreter
+let resolver: Resolver
+
+function run(code: string) {
+  const scanner = new Scanner(code)
+  const parser = new Parser(scanner.scanTokens())
+  const stmts = parser.parse()
+  if (Log.hadError) return
+  interpreter = interpreter || new Interpreter()
+  resolver = resolver || new Resolver(interpreter);
+  resolver.resolve(stmts);
+  if (Log.hadError) return
+
+  interpreter.interpret(stmts)
+}
+
 commander.version('0.1.0')
 
 commander.command('generate_ast <file>')
@@ -44,6 +60,15 @@ commander.command('repl')
     })
     readline.setPrompt('> ')
     readline.on('line', line => {
+      if (line.toLowerCase() == 'clear') {
+        console.clear()
+        readline.prompt()
+        return
+      }
+      if (line.toLowerCase() == 'exit') {
+        readline.close()
+        return
+      }
       run(line)
       Log.hadError = false
       readline.prompt()
@@ -52,16 +77,3 @@ commander.command('repl')
   })
 
 commander.parse(process.argv)
-
-function run(code: string) {
-  const scanner = new Scanner(code)
-  const parser = new Parser(scanner.scanTokens())
-  const stmts = parser.parse()
-  if (Log.hadError) return
-  const interpreter = new Interpreter()
-  const resolver = new Resolver(interpreter);
-  resolver.resolve(stmts);
-  if (Log.hadError) return
-
-  interpreter.interpret(stmts)
-}

@@ -7,15 +7,15 @@ export class Stack<T> {
   }
 
   push(val: T) {
-    this.list.unshift(val)
+    this.list.push(val)
   }
 
   pop() {
-    this.list.shift()
+    this.list.pop()
   }
 
   peek() {
-    return this.list[0]
+    return this.list[this.list.length - 1]
   }
 
   isEmpty() {

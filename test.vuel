@@ -1,10 +1,8 @@
-fun hello(arg) {
-  var arg = "first";
-  var name = "as";
-  print arg;
-  return "asdf";
+class Circle {
+  Circle(radius) {
+    this.radius = radius;
+  }
 }
 
-print hello("Momo");
-
-//print hello;
+var circle = Circle(4);
+print circle.radius;

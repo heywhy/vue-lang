@@ -1,4 +1,10 @@
 export enum FunctionType {
   NONE,
-  FUNCTION
+  METHOD,
+  FUNCTION,
+  INITIALIZER
+}
+
+export enum ClassType {
+  NONE, CLASS
 }
