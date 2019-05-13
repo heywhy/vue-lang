@@ -1,5 +1,5 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
-import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression } from '../parser/expression';
+import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression } from '../parser/expression';
 import { TokenType } from '../tokenizer/token-type';
 import { Log } from '../tokenizer/logger';
 import { Token } from '../tokenizer/token';
@@ -32,14 +32,29 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   }
 
   visitClassStmt(stmt: ClassStmt) {
-    this.environment.define(stmt.name.lexeme, null);
+    let superclass;
+    if (stmt.superclass != null) {
+      superclass = this.evaluate(stmt.superclass);
+      if (!(superclass instanceof LangClass)) {
+        throw new RuntimeError(stmt.superclass.name, 'Superclass must be a class.')
+      }
+    }
+
+    this.environment.define(stmt.name.lexeme, null)
+    if (stmt.superclass != null) {
+      this.environment = new Environment(this.environment)
+      this.environment.define('super', superclass)
+    }
     const fields: Map<string, Callable> = new Map()
     stmt.body.forEach(stmt1 => {
       const isInitializer = stmt1.name.lexeme == stmt.name.lexeme
       const callable = new LangCallable(stmt1, this.environment, isInitializer);
       fields.set(stmt1.name.lexeme, callable);
     })
-    const klass = new LangClass(stmt.name.lexeme, fields);
+    const klass = new LangClass(stmt.name.lexeme, fields, superclass);
+    if (superclass != null) {
+      this.environment = this.environment.enclosing!;
+    }
     this.environment.assign(stmt.name, klass);
   }
 
@@ -88,6 +103,18 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     if (stmt.value != null) value = this.evaluate(stmt.value);
 
     throw new ReturnError(value);
+  }
+
+  visitSuperExpr(expr: SuperExpression) {
+    const distance = this.locals.get(expr);
+    const superclass: LangClass = this.environment.getAt(distance!, 'super') as any
+    const object: ClassInstance = this.environment.getAt(distance! - 1, 'this') as any
+    const method: LangCallable = superclass.findMethod(expr.method.lexeme) as any
+    if (method == null) {
+      throw new RuntimeError(expr.method,
+        `Undefined property '${expr.method.lexeme }'.`)
+    }
+    return method.bind(object)
   }
 
   visitThisExpr(expr: ThisExpression) {
@@ -222,7 +249,7 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     return null as any
   }
 
-  private lookUpVariable(name: Token, expr: VariableExpression|ThisExpression) {
+  private lookUpVariable(name: Token, expr: VariableExpression | ThisExpression) {
     const distance = this.locals.get(expr);
     if (distance != null) {
       return this.environment.getAt(distance, name.lexeme);

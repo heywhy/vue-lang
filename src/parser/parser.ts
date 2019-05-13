@@ -1,5 +1,5 @@
 import { Token } from "../tokenizer/token";
-import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression } from "./expression";
+import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression } from "./expression";
 import { TokenType } from "../tokenizer/token-type";
 import { Log } from "../tokenizer/logger";
 import { ParseError } from '../errors'
@@ -34,16 +34,22 @@ export class Parser {
 
   private classDeclaration() {
     const name = this.consume(TokenType.IDENTIFIER, 'Expect class name.');
-    this.consume(TokenType.LEFT_BRACE, `Expect '{' after class.`)
-
     const methods: FunctionStmt[] = [];
+
+    let superClass: VariableExpression
+    if (this.match(TokenType.LESS)) {
+      this.consume(TokenType.IDENTIFIER, 'Expect superclass name')
+      superClass = new VariableExpression(this.previous())
+    }
+
+    this.consume(TokenType.LEFT_BRACE, `Expect '{' after class.`)
     while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
       methods.push(this.functionDeclaration("method"));
     }
 
     this.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.");
 
-    return new ClassStmt(name, methods);
+    return new ClassStmt(name, superClass!, methods);
   }
 
   private functionDeclaration(type: string) {
@@ -319,6 +325,13 @@ export class Parser {
 
     if (this.match(TokenType.NUMBER, TokenType.STRING)) {
       return new LiteralExpression(this.previous().literal);
+    }
+
+    if (this.match(TokenType.SUPER)) {
+      const keyword = this.previous()
+      this.consume(TokenType.DOT, "Expect '.' after 'super'.")
+      const method = this.consume(TokenType.IDENTIFIER, 'Expect superclass method name')
+      return new SuperExpression(keyword, method)
     }
 
     if (this.match(TokenType.THIS)) return new ThisExpression(this.previous())

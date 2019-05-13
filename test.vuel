@@ -1,8 +1,21 @@
-class Circle {
-  Circle(radius) {
-    this.radius = radius;
+class App {
+  call() {
+    print "app calls";
   }
 }
 
+class Circle < App {
+  Circle(radius) {
+    this.radius = radius;
+    print this;
+  }
+
+  call() {
+    super.call();
+    return "lover";
+  }
+}
+
+
 var circle = Circle(4);
-print circle.radius;
+print circle.call();

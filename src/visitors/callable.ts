@@ -75,7 +75,8 @@ export class LangCallable extends Callable {
 export class LangClass extends Callable {
   constructor(
     public readonly name: string,
-    public readonly fields: Map<string, Callable>) {
+    public readonly fields: Map<string, Callable>,
+    public readonly superclass?: LangClass) {
     super()
   }
 
@@ -98,9 +99,13 @@ export class LangClass extends Callable {
     return instance
   }
 
-  findMethod(name: string) {
+  findMethod(name: string): Callable|null|undefined {
     if (this.fields.has(name)) {
       return this.fields.get(name);
+    }
+
+    if (this.superclass != null) {
+      return this.superclass.findMethod(name)
     }
 
     return null;
@@ -110,7 +115,7 @@ export class LangClass extends Callable {
 
 export class ClassInstance {
   private readonly fields: Map<String, any> = new Map();
-  constructor(private readonly klass: LangClass) {}
+  constructor(private readonly klass: LangClass) { }
 
   get(name: Token) {
     if (this.fields.has(name.lexeme)) {

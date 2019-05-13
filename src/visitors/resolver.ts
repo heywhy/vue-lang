@@ -1,7 +1,7 @@
 import { ExprVisitor, StmtVisitor } from "./visitor";
 import { Interpreter } from "./interpreter";
 import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt } from "../parser/statement";
-import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression } from "../parser/expression";
+import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression, SuperExpression } from "../parser/expression";
 import { Token } from "../tokenizer/token";
 import { Stack } from "../uitls/stack";
 import { Log } from "../tokenizer/logger";
@@ -21,6 +21,20 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
     this.declare(stmt.name)
     this.define(stmt.name)
 
+    if (stmt.superclass != null &&
+      stmt.name.lexeme == stmt.superclass.name.lexeme) {
+      Log.syntaxError(stmt.superclass.name, 'A class cannot inherit from itself.')
+    }
+    if (stmt.superclass != null) {
+      this.currentClass = ClassType.SUBCLASS
+      this.resolveExpr(stmt.superclass)
+    }
+
+    if (stmt.superclass != null) {
+      this.beginScope()
+      this.scopes.peek().set('super', true)
+    }
+
     this.beginScope()
     this.scopes.peek().set('this', true)
     stmt.body.forEach(field => {
@@ -31,6 +45,7 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
       this.resolveFunction(field, decl)
     })
     this.endScope()
+    if (stmt.superclass != null) this.endScope()
     this.currentClass = enclosingClass
   }
 
@@ -106,6 +121,15 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   visitWhileStmt(stmt: WhileStmt) {
     this.resolveExpr(stmt.condition);
     this.resolveStmt(stmt.body);
+  }
+
+  visitSuperExpr(expr: SuperExpression) {
+    if (this.currentClass == ClassType.NONE) {
+      Log.syntaxError(expr.keyword, "Cannot use 'super' outside of a class.")
+    } else if (this.currentClass != ClassType.SUBCLASS) {
+      Log.syntaxError(expr.keyword, "Cannot use 'super' in a class with no superclass.")
+    }
+    this.resolveLocal(expr, expr.keyword)
   }
 
   visitSetExpr(expr: SetExpression) {

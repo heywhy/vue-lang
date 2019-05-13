@@ -5,7 +5,7 @@ import { RuntimeError } from "./errors";
 export class Environment {
   private values: Map<String, Object> = new Map();
 
-  constructor(private readonly enclosing?: Environment) {}
+  constructor(public readonly enclosing?: Environment) {}
 
   define(name: string, value: any) {
     this.values.set(name, value);

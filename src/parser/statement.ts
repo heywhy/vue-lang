@@ -1,4 +1,4 @@
-import { Expression } from "./expression";
+import { Expression, VariableExpression } from "./expression";
 import { StmtVisitor } from "../visitors/visitor";
 import { Token } from "../tokenizer/token";
 
@@ -120,6 +120,7 @@ export class ReturnStmt extends Statement {
 export class ClassStmt extends Statement {
   constructor(
     public readonly name: Token,
+    public readonly superclass: VariableExpression,
     public readonly body: FunctionStmt[]
   ) {
     super()

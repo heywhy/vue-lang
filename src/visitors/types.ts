@@ -6,5 +6,5 @@ export enum FunctionType {
 }
 
 export enum ClassType {
-  NONE, CLASS
+  NONE, CLASS, SUBCLASS
 }

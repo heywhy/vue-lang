@@ -134,3 +134,15 @@ export class ThisExpression extends Expression {
     return visitor.visitThisExpr(this)
   }
 }
+
+export class SuperExpression extends Expression {
+  constructor(
+    public readonly keyword: Token,
+    public readonly method: Token) {
+    super()
+  }
+
+  accept<R>(visitor: ExprVisitor<R>) {
+    return visitor.visitSuperExpr(this)
+  }
+}
