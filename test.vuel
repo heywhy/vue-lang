@@ -1,17 +1,21 @@
 class App {
-  call() {
-    print "app calls";
+  App(name) {
+    this.name = name;
+  }
+
+  call(name) {
+    print "app calls " + this.name;
   }
 }
 
 class Circle < App {
   Circle(radius) {
+    super("heywhy");
     this.radius = radius;
-    print this;
   }
 
   call() {
-    super.call();
+    super.call("me");
     return "lover";
   }
 }

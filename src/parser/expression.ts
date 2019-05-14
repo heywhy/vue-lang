@@ -1,8 +1,8 @@
-import { Token } from "../tokenizer/token";
-import { ExprVisitor } from "../visitors/visitor";
+import { Token } from '../tokenizer/token'
+import { ExprVisitor } from '../visitors/visitor'
 
 export abstract class Expression {
-  abstract accept<R>(visitor: ExprVisitor<R>): R;
+  abstract accept<R>(visitor: ExprVisitor<R>): R
 }
 
 export class BinaryExpression extends Expression {
@@ -10,11 +10,11 @@ export class BinaryExpression extends Expression {
     public readonly left: Expression,
     public readonly operator: Token,
     public readonly right: Expression) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitBinaryExpr(this);
+    return visitor.visitBinaryExpr(this)
   }
 }
 
@@ -23,42 +23,42 @@ export class UnaryExpression extends Expression {
   constructor(
     public readonly operator: Token,
     public readonly right: Expression) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitUnaryExpr(this);
+    return visitor.visitUnaryExpr(this)
   }
 }
 
 export class GroupingExpression extends Expression {
   constructor(public readonly expression: Expression) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitGroupingExpr(this);
+    return visitor.visitGroupingExpr(this)
   }
 }
 
 
 export class LiteralExpression extends Expression {
   constructor(public readonly value: any) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitLiteralExpr(this);
+    return visitor.visitLiteralExpr(this)
   }
 }
 
 export class VariableExpression extends Expression {
   constructor(public readonly name: Token) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitVariableExpr(this);
+    return visitor.visitVariableExpr(this)
   }
 }
 
@@ -66,11 +66,11 @@ export class AssignExpression extends Expression {
   constructor(
     public readonly name: Token,
     public readonly value: Expression) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitAssignExpr(this);
+    return visitor.visitAssignExpr(this)
   }
 }
 
@@ -79,11 +79,11 @@ export class LogicalExpression extends Expression {
     public readonly left: Expression,
     public readonly operator: Token,
     public readonly right: Expression) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitLogicalExpr(this);
+    return visitor.visitLogicalExpr(this)
   }
 }
 
@@ -92,11 +92,11 @@ export class CallExpression extends Expression {
     public readonly callee: Expression,
     public readonly paren: Token,
     public readonly args: Expression[]) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitCallExpr(this);
+    return visitor.visitCallExpr(this)
   }
 }
 
@@ -104,11 +104,11 @@ export class GetExpression extends Expression {
   constructor(
     public readonly object: Expression,
     public readonly name: Token) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitGetExpr(this);
+    return visitor.visitGetExpr(this)
   }
 }
 
@@ -117,11 +117,11 @@ export class SetExpression extends Expression {
     public readonly object: Expression,
     public readonly name: Token,
     public readonly value: Expression) {
-    super();
+    super()
   }
 
   accept<R>(visitor: ExprVisitor<R>): R {
-    return visitor.visitSetExpr(this);
+    return visitor.visitSetExpr(this)
   }
 }
 
@@ -138,7 +138,8 @@ export class ThisExpression extends Expression {
 export class SuperExpression extends Expression {
   constructor(
     public readonly keyword: Token,
-    public readonly method: Token) {
+    public readonly method: Token|undefined,
+    public readonly isConstructorCall: boolean) {
     super()
   }
 

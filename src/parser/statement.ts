@@ -1,10 +1,10 @@
-import { Expression, VariableExpression } from "./expression";
-import { StmtVisitor } from "../visitors/visitor";
-import { Token } from "../tokenizer/token";
+import { Expression, VariableExpression } from './expression'
+import { StmtVisitor } from '../visitors/visitor'
+import { Token } from '../tokenizer/token'
 
 export abstract class Statement {
 
-  abstract accept<R>(visitor: StmtVisitor<R>): R;
+  abstract accept<R>(visitor: StmtVisitor<R>): R
 }
 
 export class ExpressionStmt extends Statement {
@@ -13,7 +13,7 @@ export class ExpressionStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitExpressionStmt(this);
+    return visitor.visitExpressionStmt(this)
   }
 }
 
@@ -23,7 +23,7 @@ export class PrintStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitPrintStmt(this);
+    return visitor.visitPrintStmt(this)
   }
 }
 
@@ -35,7 +35,7 @@ export class VarStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitVarStmt(this);
+    return visitor.visitVarStmt(this)
   }
 }
 
@@ -45,7 +45,7 @@ export class BlockStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitBlockStmt(this);
+    return visitor.visitBlockStmt(this)
   }
 }
 
@@ -59,7 +59,7 @@ export class IfStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitIfStmt(this);
+    return visitor.visitIfStmt(this)
   }
 }
 
@@ -71,7 +71,7 @@ export class WhileStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitWhileStmt(this);
+    return visitor.visitWhileStmt(this)
   }
 }
 
@@ -86,7 +86,7 @@ export class ForStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return null as any;
+    return null as any
   }
 }
 
@@ -100,7 +100,7 @@ export class FunctionStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitFunctionStmt(this);
+    return visitor.visitFunctionStmt(this)
   }
 }
 
@@ -113,7 +113,7 @@ export class ReturnStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitReturnStmt(this);
+    return visitor.visitReturnStmt(this)
   }
 }
 
@@ -127,6 +127,6 @@ export class ClassStmt extends Statement {
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitClassStmt(this);
+    return visitor.visitClassStmt(this)
   }
 }
