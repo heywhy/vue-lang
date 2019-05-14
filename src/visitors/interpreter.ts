@@ -6,7 +6,7 @@ import { Token } from '../tokenizer/token'
 import { RuntimeError, ReturnError } from '../errors'
 import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt } from '../parser/statement'
 import { Environment } from '../environment'
-import { LangCallable, LangClass, ClassInstance, Callable, NativeFn } from './callable'
+import { LangCallable, LangClass, ClassInstance, Callable, NativeFn, LangProperty } from './callable'
 
 export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   public readonly globals = new Environment()
@@ -47,9 +47,13 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     }
     const fields: Map<string, Callable> = new Map()
     stmt.body.forEach(stmt1 => {
-      const isInitializer = stmt1.name.lexeme == stmt.name.lexeme
-      const callable = new LangCallable(stmt1, this.environment, isInitializer)
-      fields.set(stmt1.name.lexeme, callable)
+      if (stmt1 instanceof FunctionStmt) {
+        const isInitializer = stmt1.name.lexeme == stmt.name.lexeme
+        const callable = new LangCallable(stmt1, this.environment, isInitializer)
+        fields.set(stmt1.name.lexeme, callable)
+      } else if (stmt1 instanceof VarStmt) {
+        fields.set(stmt1.name.lexeme, new LangProperty(stmt1, this.environment))
+      }
     })
     if (!fields.has(stmt.name.lexeme)) {
       const decl: FunctionStmt = new FunctionStmt(stmt.name, [], [])
@@ -114,8 +118,8 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     const superclass: LangClass = this.environment.getAt(distance!, 'super') as any
     const object: ClassInstance = this.environment.getAt(distance! - 1, 'this') as any
     const method: LangCallable = expr.isConstructorCall && !expr.method
-      ? superclass.findMethod(superclass.name) as any
-      : superclass.findMethod(expr.method!.lexeme) as any
+      ? superclass.findField(superclass.name) as any
+      : superclass.findField(expr.method!.lexeme) as any
     if (method == null) {
       throw new RuntimeError(expr.method!,
         `Undefined property '${expr.method!.lexeme }'.`)

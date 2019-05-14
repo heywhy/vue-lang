@@ -1,10 +1,12 @@
 class App {
+  names: string = "AYomide";
   App(name) {
-    this.name = name;
+    //this.name = name;
   }
 
   call(name) {
-    print "app calls " + this.name;
+    print this.names;
+    //print "app calls " + this.names;
   }
 }
 
@@ -21,5 +23,5 @@ class Circle < App {
 }
 
 
-var circle: Circle = Circle(4);
-print circle.call();
+var circle: Circle = App(4);
+print circle.call("a");

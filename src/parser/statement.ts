@@ -122,7 +122,7 @@ export class ClassStmt extends Statement {
   constructor(
     public readonly name: Token,
     public readonly superclass: VariableExpression,
-    public readonly body: FunctionStmt[]
+    public readonly body: Statement[]
   ) {
     super()
   }

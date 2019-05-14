@@ -1,6 +1,6 @@
 import { Interpreter } from './interpreter'
 import { Environment } from '../environment'
-import { FunctionStmt } from '../parser/statement'
+import { FunctionStmt, VarStmt } from '../parser/statement'
 import { ReturnError, RuntimeError } from '../errors'
 import { Token } from '../tokenizer/token'
 
@@ -71,6 +71,31 @@ export class LangCallable extends Callable {
   }
 }
 
+export class LangProperty extends Callable {
+  constructor(
+    private readonly declaration: VarStmt,
+    private readonly closure: Environment) {
+    super()
+  }
+
+  get name() {
+    return this.declaration.name
+  }
+
+  bind(instance: ClassInstance) {
+    const environment = new Environment(this.closure)
+    environment.define('this', instance)
+    return new LangProperty(this.declaration, environment)
+  }
+
+  invoke(interpreter: Interpreter, args: any[]) {
+    const environment = new Environment(this.closure)
+    console.log(this.declaration)
+    interpreter.visitVarStmt(this.declaration)
+    // interpreter.visitSetExpr()
+  }
+}
+
 
 export class LangClass extends Callable {
   constructor(
@@ -85,27 +110,34 @@ export class LangClass extends Callable {
   }
 
   get arity() {
-    const initializer: LangCallable = this.findMethod(this.name) as any
+    const initializer: LangCallable = this.findField(this.name) as any
     if (initializer == null) return 0
     return initializer.arity
   }
 
   invoke(interpreter: Interpreter, args: any[]) {
     const instance = new ClassInstance(this)
-    const initializer: LangCallable = this.findMethod(this.name) as any
+    const initializer: LangCallable = this.findField(this.name) as any
     if (initializer != null) {
       initializer.bind(instance).invoke(interpreter, args)
     }
+    this.fields.forEach(field => {
+      if (field instanceof LangProperty) {
+        // const val = field.bind(instance).invoke(interpreter, [])
+        console.log('vallsk => ', instance.get(field.name))
+        // instance.set(field.name, val)
+      }
+    })
     return instance
   }
 
-  findMethod(name: string): Callable|null|undefined {
+  findField(name: string): Callable|null|undefined {
     if (this.fields.has(name)) {
       return this.fields.get(name)
     }
 
     if (this.superclass != null) {
-      return this.superclass.findMethod(name)
+      return this.superclass.findField(name)
     }
 
     return null
@@ -122,7 +154,7 @@ export class ClassInstance {
       return this.fields.get(name.lexeme)
     }
 
-    const callable: LangCallable = this.klass.findMethod(name.lexeme) as any
+    const callable: LangCallable = this.klass.findField(name.lexeme) as any
     if (callable != null) return callable.bind(this)
 
     throw new RuntimeError(name, `Undefined property '${name.lexeme}'.`)

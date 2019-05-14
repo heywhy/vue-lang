@@ -34,7 +34,7 @@ export class Parser {
 
   private classDeclaration() {
     const name = this.consume(TokenType.IDENTIFIER, 'Expect class name.')
-    const methods: FunctionStmt[] = []
+    const fields: Statement[] = []
 
     let superClass: VariableExpression
     if (this.match(TokenType.LESS)) {
@@ -44,12 +44,20 @@ export class Parser {
 
     this.consume(TokenType.LEFT_BRACE, "Expect '{' after class.")
     while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
-      methods.push(this.functionDeclaration('method'))
+      fields.push(this.fieldDeclaration())
     }
 
     this.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
-    return new ClassStmt(name, superClass!, methods)
+    return new ClassStmt(name, superClass!, fields)
+  }
+
+  private fieldDeclaration() {
+    if (this.check(TokenType.IDENTIFIER) && this.peekNext().type === TokenType.COLON) {
+      return this.varDeclaration()
+    } else {
+      return this.functionDeclaration('method')
+    }
   }
 
   private functionDeclaration(type: string) {
@@ -416,6 +424,10 @@ export class Parser {
 
   private peek() {
     return this.tokens[this.current]
+  }
+
+  private peekNext() {
+    return this.tokens[this.current + 1]
   }
 
   private previous() {

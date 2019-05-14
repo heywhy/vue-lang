@@ -38,11 +38,16 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
     this.beginScope()
     this.scopes.peek().set('this', true)
     stmt.body.forEach(field => {
-      let decl = FunctionType.METHOD
-      if (field.name.lexeme == stmt.name.lexeme) {
-        decl = FunctionType.INITIALIZER
+      if (field instanceof FunctionStmt) {
+        let decl = FunctionType.METHOD
+        if (field.name.lexeme == stmt.name.lexeme) {
+          decl = FunctionType.INITIALIZER
+        }
+        this.resolveFunction(field, decl)
       }
-      this.resolveFunction(field, decl)
+      if (field instanceof VarStmt) {
+        this.resolveField(stmt)
+      }
     })
     this.endScope()
     if (stmt.superclass != null) this.endScope()
@@ -168,6 +173,11 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
 
   resolve(statements: Statement[]) {
     statements.forEach(stmt => this.resolveStmt(stmt))
+  }
+
+  private resolveField(field: VarStmt) {
+    this.declare(field.name)
+    this.define(field.name)
   }
 
   private resolveFunction(fun: FunctionStmt, type: FunctionType) {
