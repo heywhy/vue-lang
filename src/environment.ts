@@ -2,7 +2,7 @@ import { Token } from './tokenizer/token'
 import { RuntimeError } from './errors'
 
 export class Environment {
-  private values: Map<String, Object> = new Map()
+  private values: Map<string, object> = new Map()
 
   constructor(public readonly enclosing?: Environment) {}
 

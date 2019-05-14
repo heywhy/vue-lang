@@ -296,12 +296,12 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   }
 
   private stringify(obj: Object) {
-    if (obj == null) return "nil"
+    if (obj == null) return 'nil'
 
     // Hack. Work around Java adding ".0" to integer-valued doubles.
     if (obj instanceof Number) {
       let text = obj.toString()
-      if (text.endsWith(".0")) {
+      if (text.endsWith('.0')) {
         text = text.substring(0, text.length - 2)
       }
       return text
@@ -313,6 +313,6 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   private checkNumberOperands(operator: Token, left: object, right: object) {
     if (typeof left === 'number' && typeof right === 'number') return
 
-    throw new RuntimeError(operator, "Operands must be numbers.")
+    throw new RuntimeError(operator, 'Operands must be numbers.')
   }
 }
