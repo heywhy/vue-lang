@@ -1,13 +1,13 @@
 import * as path from 'path'
 import commander from 'commander'
-import { generateAst } from './ast-generator';
-import { existsSync, readFileSync } from 'fs';
+import { generateAst } from './ast-generator'
+import { existsSync, readFileSync } from 'fs'
 import { createInterface } from 'readline'
 import { Scanner } from '../tokenizer/scanner'
-import { Parser } from '../parser/parser';
-import { Interpreter } from '../visitors/interpreter';
-import { Resolver } from '../visitors/resolver';
-import { Log } from '../tokenizer/logger';
+import { Parser } from '../parser/parser'
+import { Interpreter } from '../visitors/interpreter'
+import { Resolver } from '../visitors/resolver'
+import { Log } from '../tokenizer/logger'
 
 let interpreter: Interpreter
 let resolver: Resolver
@@ -18,8 +18,8 @@ function run(code: string) {
   const stmts = parser.parse()
   if (Log.hadError) return
   interpreter = interpreter || new Interpreter()
-  resolver = resolver || new Resolver(interpreter);
-  resolver.resolve(stmts);
+  resolver = resolver || new Resolver(interpreter)
+  resolver.resolve(stmts)
   if (Log.hadError) return
 
   interpreter.interpret(stmts)
@@ -48,8 +48,8 @@ commander.command('run <file>')
     const content = readFileSync(file).toString()
     run(content)
 
-    if (Log.hadError) process.exit(65);
-    if (Log.hadRuntimeError) process.exit(70);
+    if (Log.hadError) process.exit(65)
+    if (Log.hadRuntimeError) process.exit(70)
   })
 
 commander.command('repl')

@@ -1,8 +1,8 @@
-import { Interpreter } from "./interpreter";
-import { Environment } from "../environment";
-import { FunctionStmt } from "../parser/statement";
-import { ReturnError, RuntimeError } from "../errors";
-import { Token } from "../tokenizer/token";
+import { Interpreter } from './interpreter'
+import { Environment } from '../environment'
+import { FunctionStmt } from '../parser/statement'
+import { ReturnError, RuntimeError } from '../errors'
+import { Token } from '../tokenizer/token'
 
 export abstract class Callable {
   arity: number | undefined
@@ -40,15 +40,15 @@ export class LangCallable extends Callable {
   }
 
   invoke(interpreter: Interpreter, args: any[]) {
-    const environment = new Environment(this.closure);
+    const environment = new Environment(this.closure)
     for (let i = 0; i < this.declaration.params.length; i++) {
-      environment.define(this.declaration.params[i].lexeme, args[i]);
+      environment.define(this.declaration.params[i].lexeme, args[i])
     }
     try {
-      interpreter.executeBlock(this.declaration.body, environment);
+      interpreter.executeBlock(this.declaration.body, environment)
     } catch (e) {
       if (e instanceof ReturnError) {
-        if (this.isInitializer) return this.closure.getAt(0, "this");
+        if (this.isInitializer) return this.closure.getAt(0, 'this')
         return e.value
       }
       throw e
@@ -57,13 +57,13 @@ export class LangCallable extends Callable {
   }
 
   bind(instance: ClassInstance) {
-    const environment = new Environment(this.closure);
-    environment.define("this", instance);
-    return new LangCallable(this.declaration, environment, this.isInitializer);
+    const environment = new Environment(this.closure)
+    environment.define('this', instance)
+    return new LangCallable(this.declaration, environment, this.isInitializer)
   }
 
   toString() {
-    return `<fn ${this.declaration.name.lexeme}>`;
+    return `<fn ${this.declaration.name.lexeme}>`
   }
 
   get arity() {
@@ -81,58 +81,58 @@ export class LangClass extends Callable {
   }
 
   toString() {
-    return `<class ${this.name}>`;
+    return `<class ${this.name}>`
   }
 
   get arity() {
-    const initializer: LangCallable = this.findMethod(this.name) as any;
-    if (initializer == null) return 0;
-    return initializer.arity;
+    const initializer: LangCallable = this.findMethod(this.name) as any
+    if (initializer == null) return 0
+    return initializer.arity
   }
 
   invoke(interpreter: Interpreter, args: any[]) {
     const instance = new ClassInstance(this)
-    const initializer: LangCallable = this.findMethod(this.name) as any;
+    const initializer: LangCallable = this.findMethod(this.name) as any
     if (initializer != null) {
-      initializer.bind(instance).invoke(interpreter, args);
+      initializer.bind(instance).invoke(interpreter, args)
     }
     return instance
   }
 
   findMethod(name: string): Callable|null|undefined {
     if (this.fields.has(name)) {
-      return this.fields.get(name);
+      return this.fields.get(name)
     }
 
     if (this.superclass != null) {
       return this.superclass.findMethod(name)
     }
 
-    return null;
+    return null
   }
 }
 
 
 export class ClassInstance {
-  private readonly fields: Map<String, any> = new Map();
+  private readonly fields: Map<String, any> = new Map()
   constructor(private readonly klass: LangClass) { }
 
   get(name: Token) {
     if (this.fields.has(name.lexeme)) {
-      return this.fields.get(name.lexeme);
+      return this.fields.get(name.lexeme)
     }
 
     const callable: LangCallable = this.klass.findMethod(name.lexeme) as any
     if (callable != null) return callable.bind(this)
 
-    throw new RuntimeError(name, `Undefined property '${name.lexeme}'.`);
+    throw new RuntimeError(name, `Undefined property '${name.lexeme}'.`)
   }
 
   set(name: Token, value: any) {
-    this.fields.set(name.lexeme, value);
+    this.fields.set(name.lexeme, value)
   }
 
   public toString() {
-    return `<@${this.klass.name} instance>`;
+    return `<@${this.klass.name} instance>`
   }
 }

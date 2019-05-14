@@ -1,4 +1,4 @@
-import { readFile } from "fs";
+import { readFile } from 'fs'
 
 export function generateAst(file: string) {
   readFile(file, null, (err: NodeJS.ErrnoException|null, data: Buffer) => {
