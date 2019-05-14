@@ -74,13 +74,17 @@ export class Parser {
   private varDeclaration() {
     const name = this.consume(TokenType.IDENTIFIER, 'Expect variable name.')
 
-    let initializer: Expression
+    let initializer: Expression|undefined
+    let type: Token|undefined
+    if (this.match(TokenType.COLON)) {
+      type = this.consume(TokenType.IDENTIFIER, 'Expected a type identifier.')
+    }
     if (this.match(TokenType.EQUAL)) {
       initializer = this.expression()
     }
 
     this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
-    return new VarStmt(name, initializer!)
+    return new VarStmt(name, initializer, type)
   }
 
   private statement() {

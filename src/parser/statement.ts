@@ -30,7 +30,8 @@ export class PrintStmt extends Statement {
 export class VarStmt extends Statement {
   constructor(
     public readonly name: Token,
-    public readonly initializer: Expression) {
+    public readonly initializer?: Expression,
+    public readonly type?: Token) {
     super()
   }
 

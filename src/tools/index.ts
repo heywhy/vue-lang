@@ -21,7 +21,7 @@ function run(code: string) {
   resolver = resolver || new Resolver(interpreter)
   resolver.resolve(stmts)
   if (Log.hadError) return
-
+  console.log(stmts)
   interpreter.interpret(stmts)
 }
 
