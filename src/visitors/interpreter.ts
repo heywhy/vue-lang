@@ -298,7 +298,6 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   private stringify(obj: Object) {
     if (obj == null) return 'nil'
 
-    // Hack. Work around Java adding ".0" to integer-valued doubles.
     if (obj instanceof Number) {
       let text = obj.toString()
       if (text.endsWith('.0')) {
