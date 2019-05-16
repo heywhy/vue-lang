@@ -1,27 +1,30 @@
 class App {
+  //names;
   names: string = "AYomide";
   App(name) {
     //this.name = name;
   }
 
   call(name) {
-    print this.names;
-    //print "app calls " + this.names;
+    //print this.names;
+    print "app calls " + this.names;
   }
 }
 
-class Circle < App {
+class Circle {
+  area = 8901;
   Circle(radius) {
-    super("heywhy");
+    //super();
     this.radius = radius;
   }
 
   call() {
-    super.call("me");
+    //super.call("me");
     return "lover";
   }
 }
 
 
-var circle: Circle = App(4);
-print circle.call("a");
+var circle: Circle = App("app");
+print circle.call("asdf");
+print circle.area;

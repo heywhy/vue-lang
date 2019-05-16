@@ -71,32 +71,6 @@ export class LangCallable extends Callable {
   }
 }
 
-export class LangProperty extends Callable {
-  constructor(
-    private readonly declaration: VarStmt,
-    private readonly closure: Environment) {
-    super()
-  }
-
-  get name() {
-    return this.declaration.name
-  }
-
-  bind(instance: ClassInstance) {
-    const environment = new Environment(this.closure)
-    environment.define('this', instance)
-    return new LangProperty(this.declaration, environment)
-  }
-
-  invoke(interpreter: Interpreter, args: any[]) {
-    const environment = new Environment(this.closure)
-    console.log(this.declaration)
-    interpreter.visitVarStmt(this.declaration)
-    // interpreter.visitSetExpr()
-  }
-}
-
-
 export class LangClass extends Callable {
   constructor(
     public readonly name: string,
@@ -121,13 +95,6 @@ export class LangClass extends Callable {
     if (initializer != null) {
       initializer.bind(instance).invoke(interpreter, args)
     }
-    this.fields.forEach(field => {
-      if (field instanceof LangProperty) {
-        // const val = field.bind(instance).invoke(interpreter, [])
-        console.log('vallsk => ', instance.get(field.name))
-        // instance.set(field.name, val)
-      }
-    })
     return instance
   }
 

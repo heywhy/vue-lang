@@ -6,7 +6,7 @@ import { Token } from '../tokenizer/token'
 import { RuntimeError, ReturnError } from '../errors'
 import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt } from '../parser/statement'
 import { Environment } from '../environment'
-import { LangCallable, LangClass, ClassInstance, Callable, NativeFn, LangProperty } from './callable'
+import { LangCallable, LangClass, ClassInstance, Callable, NativeFn } from './callable'
 
 export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   public readonly globals = new Environment()
@@ -51,8 +51,6 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
         const isInitializer = stmt1.name.lexeme == stmt.name.lexeme
         const callable = new LangCallable(stmt1, this.environment, isInitializer)
         fields.set(stmt1.name.lexeme, callable)
-      } else if (stmt1 instanceof VarStmt) {
-        fields.set(stmt1.name.lexeme, new LangProperty(stmt1, this.environment))
       }
     })
     if (!fields.has(stmt.name.lexeme)) {
@@ -236,8 +234,7 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
         this.checkNumberOperands(expr.operator, left, right)
         return <number>left - <number>right
       case TokenType.PLUS:
-        const hasString = typeof left === 'string' || typeof right === 'string'
-        if (hasString) {
+        if (typeof left === 'string' && typeof right === 'string') {
           return String(left) + String(right)
         }
         if (typeof left === 'number' && typeof right === 'number') {

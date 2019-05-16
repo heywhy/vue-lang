@@ -34,7 +34,7 @@ export class Parser {
 
   private classDeclaration() {
     const name = this.consume(TokenType.IDENTIFIER, 'Expect class name.')
-    const fields: Statement[] = []
+    let fields: Statement[] = []
 
     let superClass: VariableExpression
     if (this.match(TokenType.LESS)) {
@@ -43,8 +43,35 @@ export class Parser {
     }
 
     this.consume(TokenType.LEFT_BRACE, "Expect '{' after class.")
+    const decls: ExpressionStmt[] = []
+    let construct: FunctionStmt|undefined
     while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
-      fields.push(this.fieldDeclaration())
+      const stmt = this.fieldDeclaration()
+      if (stmt instanceof FunctionStmt) {
+        if (stmt.name.lexeme === name.lexeme) {
+          construct = stmt
+        }
+        fields.push(stmt)
+      } else if (stmt instanceof ExpressionStmt) {
+        decls.push(stmt)
+      }
+    }
+
+    if (construct != null) {
+      const [exprStmt] = construct.body
+      if (!superClass) {
+        construct.body.splice(0, 0, ...decls)
+      } else if (superClass && exprStmt instanceof ExpressionStmt
+        && exprStmt.expression instanceof CallExpression
+        && exprStmt.expression.callee instanceof SuperExpression) {
+        construct.body.splice(1, 0, ...decls)
+      } else {
+        return this.error(name, 'Expected super call!')
+      }
+    } else {
+      construct = new FunctionStmt(name, [], [])
+      construct.body.unshift(...decls)
+      fields.push(construct)
     }
 
     this.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
@@ -53,8 +80,28 @@ export class Parser {
   }
 
   private fieldDeclaration() {
-    if (this.check(TokenType.IDENTIFIER) && this.peekNext().type === TokenType.COLON) {
-      return this.varDeclaration()
+    if (this.check(TokenType.IDENTIFIER) && (
+      this.peekNext().type === TokenType.COLON ||
+      this.peekNext().type === TokenType.EQUAL ||
+      this.peekNext().type === TokenType.SEMICOLON
+    )) {
+      const token = this.consume(TokenType.IDENTIFIER, '')
+      this.match(TokenType.COLON)
+      this.match(TokenType.IDENTIFIER)
+      let value: Token|undefined
+      if (this.match(TokenType.EQUAL) && this.match(TokenType.NUMBER, TokenType.STRING)) {
+        value = this.previous()
+      }
+      const thisToken = new Token(
+        TokenType.THIS, 'this', token.literal, token.line, token.column
+      )
+      const expr = new SetExpression(
+        new ThisExpression(thisToken),
+        token,
+        new LiteralExpression(value ? value.literal : null)
+      )
+      this.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+      return new ExpressionStmt(expr)
     } else {
       return this.functionDeclaration('method')
     }

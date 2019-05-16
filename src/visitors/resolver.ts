@@ -45,9 +45,6 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
         }
         this.resolveFunction(field, decl)
       }
-      if (field instanceof VarStmt) {
-        this.resolveField(stmt)
-      }
     })
     this.endScope()
     if (stmt.superclass != null) this.endScope()
@@ -173,11 +170,6 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
 
   resolve(statements: Statement[]) {
     statements.forEach(stmt => this.resolveStmt(stmt))
-  }
-
-  private resolveField(field: VarStmt) {
-    this.declare(field.name)
-    this.define(field.name)
   }
 
   private resolveFunction(fun: FunctionStmt, type: FunctionType) {

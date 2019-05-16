@@ -5,8 +5,9 @@ declaration    -> classDecl
                | statement ;
 
 classDecl      -> "class" IDENTIFIER ( "<" IDENTIFIER )?
-                 "{" (varDecl | function)* "}" ;
+                 "{" (fieldDecl | function)* "}" ;
 funDecl        -> "fun" function ;
+fieldDecl      -> IDENTIFIER ( ":" IDENTIFIER )? ( "=" expression )? ";" ;
 varDecl        -> "var" IDENTIFIER ( ":" IDENTIFIER )? ( "=" expression )? ";" ;
 statement      -> exprStmt
                | forStmt
