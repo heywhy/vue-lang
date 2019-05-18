@@ -41,7 +41,9 @@ export class VarStmt extends Statement {
 }
 
 export class BlockStmt extends Statement {
-  constructor(public readonly statements: Statement[]) {
+  constructor(
+    public readonly statements: Statement[],
+    public readonly newScope = true) {
     super()
   }
 

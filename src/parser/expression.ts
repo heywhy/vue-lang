@@ -156,7 +156,19 @@ export class TernaryExpression extends Expression {
   ) {
     super()
   }
+
   accept<R>(visitor: ExprVisitor<R>) {
     return visitor.visitTernaryExpr(this)
+  }
+}
+
+
+export class CommaExpression extends Expression {
+  constructor(public readonly expressions: Expression[]) {
+    super()
+  }
+
+  accept<R>(visitor: ExprVisitor<R>) {
+    return visitor.visitCommaExpr(this)
   }
 }

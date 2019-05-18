@@ -1,5 +1,5 @@
 import { Token } from '../tokenizer/token'
-import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression } from './expression'
+import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from './expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { ParseError } from '../errors'
@@ -136,6 +136,27 @@ export class Parser {
     }
     if (this.match(TokenType.EQUAL)) {
       initializer = this.expression()
+      if (initializer instanceof CommaExpression) {
+        const stmts: Statement[] = [
+          new VarStmt(name, initializer.expressions.shift())
+        ]
+
+        const declare = (exprs: Expression[], stmts: Statement[]) => {
+          exprs.forEach(expr => {
+            if (expr instanceof CommaExpression) {
+              declare(expr.expressions, stmts)
+            } else if (expr instanceof AssignExpression) {
+              stmts.push(new VarStmt(expr.name, expr.value))
+            } else if (expr instanceof VariableExpression) {
+              stmts.push(new VarStmt(expr.name))
+            }
+          })
+        }
+
+        declare(initializer.expressions, stmts)
+        this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
+        return new BlockStmt(stmts, false)
+      }
     }
 
     this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
@@ -242,7 +263,15 @@ export class Parser {
   }
 
   private expression() {
-    return this.assignment()
+    let expr = this.assignment()
+    if (this.match(TokenType.COMMA)) {
+      const exprs = [expr]
+      while (!this.check(TokenType.SEMICOLON)) {
+        exprs.push(this.expression())
+      }
+      return new CommaExpression(exprs)
+    }
+    return expr
   }
 
   private assignment(): Expression {

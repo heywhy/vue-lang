@@ -1,5 +1,5 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
-import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression } from '../parser/expression'
+import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { Token } from '../tokenizer/token'
@@ -92,7 +92,9 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   }
 
   visitBlockStmt(stmt: BlockStmt) {
-    this.executeBlock(stmt.statements, new Environment(this.environment))
+    const env = stmt.newScope
+      ? new Environment(this.environment) : this.environment
+    this.executeBlock(stmt.statements, env)
   }
 
   visitVarStmt(stmt: VarStmt) {
@@ -109,6 +111,14 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     if (stmt.value != null) value = this.evaluate(stmt.value)
 
     throw new ReturnError(value)
+  }
+
+  visitCommaExpr(expr: CommaExpression) {
+    let val: any
+    expr.expressions.forEach(expr1 => {
+      val = this.evaluate(expr1)
+    })
+    return val
   }
 
   visitTernaryExpr(expr: TernaryExpression) {
@@ -201,7 +211,7 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   }
 
   visitGroupingExpr(expr: GroupingExpression) {
-    return this.evaluate(expr)
+    return this.evaluate(expr.expression)
   }
 
   visitLiteralExpr(expr: LiteralExpression) {

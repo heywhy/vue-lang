@@ -28,6 +28,10 @@ class Circle < App {
 var app: App = App("app");
 var circle: Circle = Circle("app");
 print circle.call();
-var name = circle.call() == 12 ? app == "Love" : circle.call;
+var name = circle.call() ? 19902 : circle.call;
+var b = 20, c = 120, d;
 
-print name;
+print name, d;
+
+print name = "loveryaskk", b;
+print c;

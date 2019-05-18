@@ -27,7 +27,7 @@ returnStmt     -> "return" expression? ";" ;
 whileStmt      -> "while" "(" expression ")" statement ;
 block          -> "{" declaration* "}" ;
 
-expression     -> assignment ;
+expression     -> assignment ( "," assignment )* ;
 
 assignment     -> ( call "." )? IDENTIFIER "=" assignment
                | logic_or

@@ -1,4 +1,4 @@
-import { BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression } from '../parser/expression'
+import { BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
 import { PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt } from '../parser/statement'
 
 export interface ExprVisitor<R> {
@@ -6,6 +6,7 @@ export interface ExprVisitor<R> {
   visitGetExpr(expr: GetExpression): R
   visitCallExpr(expr: CallExpression): R
   visitThisExpr(expr: ThisExpression): R
+  visitCommaExpr(expr: CommaExpression): R
   visitSuperExpr(expr: SuperExpression): R
   visitUnaryExpr(expr: UnaryExpression): R
   visitAssignExpr(expr: AssignExpression): R
