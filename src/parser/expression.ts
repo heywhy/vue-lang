@@ -147,3 +147,16 @@ export class SuperExpression extends Expression {
     return visitor.visitSuperExpr(this)
   }
 }
+
+export class TernaryExpression extends Expression {
+  constructor(
+    public readonly condition: Expression,
+    public readonly thenBranch: Expression,
+    public readonly elseBranch: Expression
+  ) {
+    super()
+  }
+  accept<R>(visitor: ExprVisitor<R>) {
+    return visitor.visitTernaryExpr(this)
+  }
+}

@@ -1,5 +1,5 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
-import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression } from '../parser/expression'
+import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression } from '../parser/expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { Token } from '../tokenizer/token'
@@ -109,6 +109,13 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     if (stmt.value != null) value = this.evaluate(stmt.value)
 
     throw new ReturnError(value)
+  }
+
+  visitTernaryExpr(expr: TernaryExpression) {
+    if (this.isTruthy(this.evaluate(expr.condition))) {
+      return this.evaluate(expr.thenBranch)
+    }
+    return this.evaluate(expr.elseBranch)
   }
 
   visitSuperExpr(expr: SuperExpression) {

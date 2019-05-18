@@ -1,7 +1,7 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
 import { Interpreter } from './interpreter'
 import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt } from '../parser/statement'
-import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression, SuperExpression } from '../parser/expression'
+import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression } from '../parser/expression'
 import { Token } from '../tokenizer/token'
 import { Stack } from '../utils/stack'
 import { Log } from '../tokenizer/logger'
@@ -63,6 +63,12 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
       this.resolveExpr(stmt.initializer)
     }
     this.define(stmt.name)
+  }
+
+  visitTernaryExpr(expr: TernaryExpression) {
+    this.resolveExpr(expr.condition)
+    this.resolveExpr(expr.thenBranch)
+    this.resolveExpr(expr.elseBranch)
   }
 
   visitThisExpr(expr: ThisExpression) {

@@ -11,10 +11,10 @@ class App {
   }
 }
 
-class Circle {
+class Circle < App {
   area = 8901;
   Circle(radius) {
-    //super();
+    super(90);
     this.radius = radius;
   }
 
@@ -25,6 +25,9 @@ class Circle {
 }
 
 
-var circle: Circle = App("app");
-print circle.call("asdf");
-print circle.area;
+var app: App = App("app");
+var circle: Circle = Circle("app");
+print circle.call();
+var name = circle.call() == 12 ? app == "Love" : circle.call;
+
+print name;

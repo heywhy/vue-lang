@@ -33,6 +33,9 @@ export class Scanner {
   private scanToken() {
     const char: string = this.advance()
     switch (char) {
+      case '?':
+        this.addToken(TokenType.QUEST_MARK)
+        break
       case ':':
         this.addToken(TokenType.COLON)
         break

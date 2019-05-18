@@ -1,5 +1,5 @@
 import { Token } from '../tokenizer/token'
-import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression } from './expression'
+import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression } from './expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { ParseError } from '../errors'
@@ -253,7 +253,7 @@ export class Parser {
       const value = this.assignment()
 
       if (expr instanceof VariableExpression) {
-        const name = (<VariableExpression>expr).name
+        const name = expr.name
         return new AssignExpression(name, value)
       } else if (expr instanceof GetExpression) {
         const get = expr
@@ -261,6 +261,10 @@ export class Parser {
       }
 
       this.error(equals, 'Invalid assignment target.')
+    } if (this.match(TokenType.QUEST_MARK)) {
+      const thenBranch = this.equality()
+      this.consume(TokenType.COLON, "Expected ':'")
+      expr = new TernaryExpression(expr, thenBranch, this.equality())
     }
 
     return expr
