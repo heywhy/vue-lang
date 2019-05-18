@@ -212,7 +212,7 @@ export class Parser {
     if (condition == null) condition = new LiteralExpression(true)
     body = new WhileStmt(condition, body)
     if (initializer != null) {
-      body = new BlockStmt([initializer, body])
+      body = new BlockStmt([initializer, body], false)
     }
     return body
   }
@@ -266,7 +266,7 @@ export class Parser {
     let expr = this.assignment()
     if (this.match(TokenType.COMMA)) {
       const exprs = [expr]
-      while (!this.check(TokenType.SEMICOLON)) {
+      while (!this.check(TokenType.SEMICOLON) && !this.check(TokenType.RIGHT_PAREN)) {
         exprs.push(this.expression())
       }
       return new CommaExpression(exprs)

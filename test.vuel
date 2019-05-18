@@ -31,7 +31,12 @@ print circle.call();
 var name = circle.call() ? 19902 : circle.call;
 var b = 20, c = 120, d;
 
-print name, d;
+print name, d != nil ? 100 : 30;
 
 print name = "loveryaskk", b;
 print c;
+
+
+for (var i = 0, j = 20; i < 5; i = i+1, j = j + i) {}
+print "i => " + i;
+print "j => " + j;

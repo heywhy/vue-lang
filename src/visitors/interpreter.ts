@@ -251,7 +251,8 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
         this.checkNumberOperands(expr.operator, left, right)
         return <number>left - <number>right
       case TokenType.PLUS:
-        if (typeof left === 'string' && typeof right === 'string') {
+        const hasString = typeof left === 'string' || typeof right === 'string'
+        if (hasString) {
           return String(left) + String(right)
         }
         if (typeof left === 'number' && typeof right === 'number') {
