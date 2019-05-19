@@ -1,5 +1,5 @@
 import { Token } from '../tokenizer/token'
-import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from './expression'
+import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression, AssignWithOpExpression } from './expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { ParseError } from '../errors'
@@ -294,6 +294,16 @@ export class Parser {
       const thenBranch = this.equality()
       this.consume(TokenType.COLON, "Expected ':'")
       expr = new TernaryExpression(expr, thenBranch, this.equality())
+    } else if (
+      this.match(
+        TokenType.PLUS_EQUAL, TokenType.MINUS_EQUAL,
+        TokenType.SLASH_EQUAL, TokenType.STAR_EQUAL
+      )
+    ) {
+      if (!(expr instanceof GetExpression) && !(expr instanceof VariableExpression)) {
+        Log.syntaxError(this.previous(), 'Unexpected assignment operator!')
+      }
+      expr = new AssignWithOpExpression(expr, this.previous(), this.assignment())
     }
 
     return expr

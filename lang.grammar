@@ -29,9 +29,9 @@ block          -> "{" declaration* "}" ;
 
 expression     -> assignment ( "," assignment )* ;
 
-assignment     -> ( call "." )? IDENTIFIER "=" assignment
+assignment     -> ( call "." )? IDENTIFIER ( "=" | "+=" | "-=" | "*=" | "/=" ) assignment
                | logic_or
-               | ternary;
+               | ternary ;
 
 ternary        -> equality "?" equality ":" equality ;
 logic_or       -> logic_and ( "or" logic_and )* ;

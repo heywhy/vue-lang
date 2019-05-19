@@ -172,3 +172,17 @@ export class CommaExpression extends Expression {
     return visitor.visitCommaExpr(this)
   }
 }
+
+export class AssignWithOpExpression extends Expression {
+  constructor(
+    public readonly left: Expression,
+    public readonly operator: Token,
+    public readonly value: Expression
+  ) {
+    super()
+  }
+
+  accept<R>(visitor: ExprVisitor<R>) {
+    return visitor.visitAssignWithOpExpr(this)
+  }
+}

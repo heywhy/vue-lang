@@ -1,5 +1,5 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
-import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
+import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression, AssignWithOpExpression } from '../parser/expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { Token } from '../tokenizer/token'
@@ -230,6 +230,28 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     return null as any
   }
 
+  visitAssignWithOpExpr(expr: AssignWithOpExpression) {
+    if (expr.left instanceof VariableExpression) {
+      return this.visitAssignExpr(
+        new AssignExpression(
+          expr.left.name,
+          new BinaryExpression(expr.left, expr.operator, expr.value)
+        )
+      )
+    }
+    if (expr.left instanceof GetExpression) {
+      const {left} = expr
+      return this.visitSetExpr(
+        new SetExpression(
+          left.object, left.name,
+          new BinaryExpression(expr.left, expr.operator, expr.value)
+        )
+      )
+    }
+    console.log(expr)
+    return null as any
+  }
+
   visitBinaryExpr(expr: BinaryExpression) {
     const left = this.evaluate(expr.left)
     const right = this.evaluate(expr.right)
@@ -248,9 +270,11 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
         this.checkNumberOperands(expr.operator, left, right)
         return left <= right
       case TokenType.MINUS:
+      case TokenType.MINUS_EQUAL:
         this.checkNumberOperands(expr.operator, left, right)
         return <number>left - <number>right
       case TokenType.PLUS:
+      case TokenType.PLUS_EQUAL:
         const hasString = typeof left === 'string' || typeof right === 'string'
         if (hasString) {
           return String(left) + String(right)
@@ -261,10 +285,12 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
         throw new RuntimeError(expr.operator,
           'Operands must be two numbers or two strings.')
       case TokenType.SLASH:
+      case TokenType.SLASH_EQUAL:
         this.checkNumberOperands(expr.operator, left, right)
         if (right === 0) throw new RuntimeError(expr.operator, 'Divisor by 0 error')
         return <number>left / <number>right
       case TokenType.STAR:
+      case TokenType.STAR_EQUAL:
         this.checkNumberOperands(expr.operator, left, right)
         return <number>left * <number>right
       case TokenType.BANG_EQUAL: return !this.isEqual(left, right)

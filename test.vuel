@@ -22,6 +22,10 @@ class Circle < App {
     //super.call("me");
     return "lover";
   }
+
+  increment() {
+    return this.area += 1;
+  }
 }
 
 
@@ -36,7 +40,10 @@ print name, d != nil ? 100 : 30;
 print name = "loveryaskk", b;
 print c;
 
+print circle.area;
 
-for (var i = 0, j = 20; i < 5; i = i+1, j = j + i) {}
+for (var i = 0, j = 20; i < 5; i = i+1, j = circle.increment()) {}
 print "i => " + i;
 print "j => " + j;
+
+print 1 + 20;
