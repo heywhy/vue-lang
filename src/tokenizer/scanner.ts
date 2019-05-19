@@ -87,6 +87,9 @@ export class Scanner {
       case '>':
         this.addToken(this.match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER)
         break
+      case '%':
+        this.addToken(this.match('=') ? TokenType.AMPERSAND_EQUAL : TokenType.AMPERSAND)
+        break
       case '/':
         if (this.match('/')) {
           // A comment goes until the end of the line.

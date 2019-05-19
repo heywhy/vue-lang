@@ -272,7 +272,7 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
       case TokenType.MINUS:
       case TokenType.MINUS_EQUAL:
         this.checkNumberOperands(expr.operator, left, right)
-        return <number>left - <number>right
+        return (left as number) - (right as number)
       case TokenType.PLUS:
       case TokenType.PLUS_EQUAL:
         const hasString = typeof left === 'string' || typeof right === 'string'
@@ -288,11 +288,15 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
       case TokenType.SLASH_EQUAL:
         this.checkNumberOperands(expr.operator, left, right)
         if (right === 0) throw new RuntimeError(expr.operator, 'Divisor by 0 error')
-        return <number>left / <number>right
+        return (left as number) / (right as number)
       case TokenType.STAR:
       case TokenType.STAR_EQUAL:
         this.checkNumberOperands(expr.operator, left, right)
-        return <number>left * <number>right
+        return (left as number) * (right as number)
+      case TokenType.AMPERSAND:
+      case TokenType.AMPERSAND_EQUAL:
+        this.checkNumberOperands(expr.operator, left, right)
+        return (left as number) % (right as number)
       case TokenType.BANG_EQUAL: return !this.isEqual(left, right)
       case TokenType.EQUAL_EQUAL: return this.isEqual(left, right)
     }

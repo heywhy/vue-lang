@@ -297,7 +297,8 @@ export class Parser {
     } else if (
       this.match(
         TokenType.PLUS_EQUAL, TokenType.MINUS_EQUAL,
-        TokenType.SLASH_EQUAL, TokenType.STAR_EQUAL
+        TokenType.SLASH_EQUAL, TokenType.STAR_EQUAL,
+        TokenType.AMPERSAND_EQUAL
       )
     ) {
       if (!(expr instanceof GetExpression) && !(expr instanceof VariableExpression)) {
@@ -372,7 +373,7 @@ export class Parser {
   private multiplication() {
     let expr = this.unary()
 
-    while (this.match(TokenType.SLASH, TokenType.STAR)) {
+    while (this.match(TokenType.SLASH, TokenType.STAR, TokenType.AMPERSAND)) {
       const operator = this.previous()
       const right = this.unary()
       expr = new BinaryExpression(expr, operator, right)
