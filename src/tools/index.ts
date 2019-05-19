@@ -8,6 +8,7 @@ import { Parser } from '../parser/parser'
 import { Interpreter } from '../visitors/interpreter'
 import { Resolver } from '../visitors/resolver'
 import { Log } from '../tokenizer/logger'
+import { ExpressionStmt, PrintStmt } from '../parser/statement';
 
 let interpreter: Interpreter
 let resolver: Resolver
@@ -15,7 +16,12 @@ let resolver: Resolver
 function run(code: string) {
   const scanner = new Scanner(code)
   const parser = new Parser(scanner.scanTokens())
-  const stmts = parser.parse()
+  const stmts = parser.parse().map(stmt =>{
+    if (stmt instanceof ExpressionStmt) {
+      return new PrintStmt(stmt.expression)
+    }
+    return stmt
+  })
   if (Log.hadError) return
   interpreter = interpreter || new Interpreter()
   resolver = resolver || new Resolver(interpreter)
