@@ -5,7 +5,7 @@ declaration    -> classDecl
                | statement ;
 
 classDecl      -> "class" IDENTIFIER ( "<" IDENTIFIER )?
-                 "{" (fieldDecl | function)* "}" ;
+                 "{" ( "static" )? (fieldDecl | function)* "}" ;
 funDecl        -> "fun" function ;
 fieldDecl      -> IDENTIFIER ( ":" IDENTIFIER )? ( "=" expression )? ";" ;
 varDecl        -> "var" IDENTIFIER ( ":" IDENTIFIER )? ( "=" expression )? ";" ;

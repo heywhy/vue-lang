@@ -35,6 +35,7 @@ export class Parser {
   private classDeclaration() {
     const name = this.consume(TokenType.IDENTIFIER, 'Expect class name.')
     let fields: Statement[] = []
+    const staticFields: Statement[] = []
 
     let superClass: VariableExpression
     if (this.match(TokenType.LESS)) {
@@ -46,14 +47,15 @@ export class Parser {
     const decls: ExpressionStmt[] = []
     let construct: FunctionStmt|undefined
     while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
-      const stmt = this.fieldDeclaration()
+      const isStatic = this.match(TokenType.STATIC)
+      const stmt = this.fieldDeclaration(name, isStatic)
       if (stmt instanceof FunctionStmt) {
         if (stmt.name.lexeme === name.lexeme) {
           construct = stmt
         }
-        fields.push(stmt)
+        isStatic ? staticFields.push(stmt) : fields.push(stmt)
       } else if (stmt instanceof ExpressionStmt) {
-        decls.push(stmt)
+        isStatic ? staticFields.push(stmt) : decls.push(stmt)
       }
     }
 
@@ -76,10 +78,16 @@ export class Parser {
 
     this.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
-    return new ClassStmt(name, superClass!, fields)
+    const staticFns = staticFields
+      .filter(field => field instanceof FunctionStmt)
+    const stmt = new BlockStmt([
+      new ClassStmt(name, superClass!, fields, staticFns),
+      ...staticFields.filter(field => field instanceof ExpressionStmt)
+    ], false)
+    return stmt
   }
 
-  private fieldDeclaration() {
+  private fieldDeclaration(className: Token, isStatic: boolean) {
     if (this.check(TokenType.IDENTIFIER) && (
       this.peekNext().type === TokenType.COLON ||
       this.peekNext().type === TokenType.EQUAL ||
@@ -96,7 +104,7 @@ export class Parser {
         TokenType.THIS, 'this', token.literal, token.line, token.column
       )
       const expr = new SetExpression(
-        new ThisExpression(thisToken),
+        isStatic ? new VariableExpression(className) : new ThisExpression(thisToken),
         token,
         new LiteralExpression(value ? value.literal : null)
       )

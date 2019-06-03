@@ -46,6 +46,7 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
       this.environment.define('super', superclass)
     }
     const fields: Map<string, Callable> = new Map()
+    const staticFields: Map<string, Callable> = new Map()
     stmt.body.forEach(stmt1 => {
       if (stmt1 instanceof FunctionStmt) {
         const isInitializer = stmt1.name.lexeme == stmt.name.lexeme
@@ -53,11 +54,18 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
         fields.set(stmt1.name.lexeme, callable)
       }
     })
+    stmt.staticFields.forEach(stmt1 => {
+      if (stmt1 instanceof FunctionStmt) {
+        const callable = new LangCallable(stmt1, this.environment, false)
+        staticFields.set(stmt1.name.lexeme, callable)
+      }
+    })
+
     if (!fields.has(stmt.name.lexeme)) {
       const decl: FunctionStmt = new FunctionStmt(stmt.name, [], [])
       fields.set(stmt.name.lexeme, new LangCallable(decl, this.environment, true))
     }
-    const klass = new LangClass(stmt.name.lexeme, fields, superclass)
+    const klass = new LangClass(stmt.name.lexeme, fields, staticFields, superclass)
     if (superclass != null) {
       this.environment = this.environment.enclosing!
     }
@@ -171,8 +179,8 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   visitSetExpr(expr: SetExpression) {
     const object = this.evaluate(expr.object)
 
-    if (!(object instanceof ClassInstance)) {
-      throw new RuntimeError(expr.name, 'Only instances have fields.')
+    if (!(object instanceof ClassInstance) && !(object instanceof LangClass)) {
+      throw new RuntimeError(expr.name, 'Only classes have fields.')
     }
 
     const value = this.evaluate(expr.value)
@@ -183,6 +191,9 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   visitGetExpr(expr: GetExpression) {
     const ob = this.evaluate(expr.object)
     if (ob instanceof ClassInstance) {
+      return ob.get(expr.name)
+    }
+    if (ob instanceof LangClass) {
       return ob.get(expr.name)
     }
 

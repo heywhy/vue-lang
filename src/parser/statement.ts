@@ -97,7 +97,8 @@ export class FunctionStmt extends Statement {
   constructor(
     public readonly name: Token,
     public readonly params: Token[],
-    public readonly body: Statement[]
+    public readonly body: Statement[],
+    public readonly isStatic?: boolean
   ) {
     super()
   }
@@ -124,7 +125,8 @@ export class ClassStmt extends Statement {
   constructor(
     public readonly name: Token,
     public readonly superclass: VariableExpression,
-    public readonly body: Statement[]
+    public readonly body: Statement[],
+    public readonly staticFields: Statement[]
   ) {
     super()
   }

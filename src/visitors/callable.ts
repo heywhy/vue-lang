@@ -75,6 +75,7 @@ export class LangClass extends Callable {
   constructor(
     public readonly name: string,
     public readonly fields: Map<string, Callable>,
+    public readonly staticFields: Map<string, Callable>,
     public readonly superclass?: LangClass) {
     super()
   }
@@ -108,6 +109,22 @@ export class LangClass extends Callable {
     }
 
     return null
+  }
+
+  get(name: Token): Callable|null|undefined {
+    if (this.staticFields.has(name.lexeme)) {
+      return this.staticFields.get(name.lexeme)
+    }
+
+    if (this.superclass != null) {
+      return this.superclass.get(name)
+    }
+
+    return null
+  }
+
+  set(name: Token, value: any) {
+    this.staticFields.set(name.lexeme, value)
   }
 }
 

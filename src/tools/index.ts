@@ -13,11 +13,11 @@ import { ExpressionStmt, PrintStmt } from '../parser/statement';
 let interpreter: Interpreter
 let resolver: Resolver
 
-function run(code: string) {
+function run(code: string, repl: boolean) {
   const scanner = new Scanner(code)
   const parser = new Parser(scanner.scanTokens())
   const stmts = parser.parse().map(stmt =>{
-    if (stmt instanceof ExpressionStmt) {
+    if (stmt instanceof ExpressionStmt && repl) {
       return new PrintStmt(stmt.expression)
     }
     return stmt
@@ -52,7 +52,7 @@ commander.command('run <file>')
       process.exit(1)
     }
     const content = readFileSync(file).toString()
-    run(content)
+    run(content, false)
 
     if (Log.hadError) process.exit(65)
     if (Log.hadRuntimeError) process.exit(70)
@@ -75,7 +75,7 @@ commander.command('repl')
         readline.close()
         return
       }
-      run(line)
+      run(line, true)
       Log.hadError = false
       readline.prompt()
     })

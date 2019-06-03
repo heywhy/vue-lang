@@ -26,6 +26,10 @@ class Circle < App {
   increment() {
     return this.area += 1;
   }
+
+  static revolve() {
+    print "I'm revolving";
+  }
 }
 
 
@@ -50,3 +54,4 @@ var e = 20;
 print e %= 3;
 
 print "E => " + e;
+Circle.revolve();
