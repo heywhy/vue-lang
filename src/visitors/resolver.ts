@@ -1,7 +1,7 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
 import { Interpreter } from './interpreter'
 import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt, BreakStmt, ContinueStmt } from '../parser/statement'
-import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression, AssignWithOpExpression } from '../parser/expression'
+import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
 import { Token } from '../tokenizer/token'
 import { Stack } from '../utils/stack'
 import { Log } from '../tokenizer/logger'
@@ -172,11 +172,6 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   visitBinaryExpr(expr: BinaryExpression) {
     this.resolveExpr(expr.left)
     this.resolveExpr(expr.right)
-  }
-
-  visitAssignWithOpExpr(expr: AssignWithOpExpression) {
-    this.resolveExpr(expr.left)
-    this.resolveExpr(expr.value)
   }
 
   visitCallExpr(expr: CallExpression) {
