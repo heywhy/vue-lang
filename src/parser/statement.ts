@@ -133,3 +133,29 @@ export class ClassStmt extends Statement {
     return visitor.visitClassStmt(this)
   }
 }
+
+export class BreakStmt extends Statement {
+  constructor(
+    public readonly keyword: Token,
+    public readonly tag?: Token
+  ) {
+    super()
+  }
+
+  accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitBreakStmt(this)
+  }
+}
+
+export class ContinueStmt extends Statement {
+  constructor(
+    public readonly keyword: Token,
+    public readonly tag?: Token
+  ) {
+    super()
+  }
+
+  accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitContinueStmt(this)
+  }
+}

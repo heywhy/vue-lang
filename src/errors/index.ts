@@ -16,3 +16,7 @@ export class ReturnError extends Error {
     super(undefined)
   }
 }
+
+export class BreakStatementError extends Error {}
+
+export class ContinueStatementError extends Error {}

@@ -20,6 +20,7 @@ export enum TokenType {
   // Keywords.
   AND, CLASS, ELSE, EXPOSE, FALSE, FUN, FOR, IF, IMPORT, MODULE,
   NIL, OR, PRINT, RETURN, STATIC, SUPER, THIS, TRUE, VAR, WHILE,
+  BREAK, CONTINUE,
 
   EOF
 }

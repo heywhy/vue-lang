@@ -1,16 +1,17 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
 import { Interpreter } from './interpreter'
-import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt } from '../parser/statement'
+import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt, BreakStmt, ContinueStmt } from '../parser/statement'
 import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression, AssignWithOpExpression } from '../parser/expression'
 import { Token } from '../tokenizer/token'
 import { Stack } from '../utils/stack'
 import { Log } from '../tokenizer/logger'
-import { FunctionType, ClassType } from './types'
+import { FunctionType, ClassType, LoopType } from './types'
 
 export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   private readonly scopes: Stack<Map<string, boolean>> = new Stack()
   private currentFunction: FunctionType = FunctionType.NONE
   private currentClass: ClassType = ClassType.NONE
+  private currentLoop: LoopType = LoopType.NONE
 
   constructor(private readonly interpreter: Interpreter) { }
 
@@ -131,8 +132,23 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   }
 
   visitWhileStmt(stmt: WhileStmt) {
+    const enclosingLoop = this.currentLoop
+    this.currentLoop = LoopType.LOOP
     this.resolveExpr(stmt.condition)
     this.resolveStmt(stmt.body)
+    this.currentLoop = enclosingLoop
+  }
+
+  visitBreakStmt(stmt: BreakStmt) {
+    if (this.currentLoop == LoopType.NONE) {
+      Log.syntaxError(stmt.keyword, "Cannot use 'break' outside of a loop statement.")
+    }
+  }
+
+  visitContinueStmt(stmt: ContinueStmt) {
+    if (this.currentLoop == LoopType.NONE) {
+      Log.syntaxError(stmt.keyword, "Cannot use 'continue' outside of a loop .")
+    }
   }
 
   visitSuperExpr(expr: SuperExpression) {

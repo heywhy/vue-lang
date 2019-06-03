@@ -1,9 +1,9 @@
 import { Token } from '../tokenizer/token'
-import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression, AssignWithOpExpression } from './expression'
+import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from './expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { ParseError } from '../errors'
-import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt } from './statement'
+import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt } from './statement'
 
 export class Parser {
 
@@ -171,7 +171,29 @@ export class Parser {
     if (this.match(TokenType.PRINT)) return this.printStatement()
     if (this.match(TokenType.RETURN)) return this.returnStatement()
     if (this.match(TokenType.LEFT_BRACE)) return new BlockStmt(this.block())
+    if (this.match(TokenType.BREAK)) return this.breakStatement()
+    if (this.match(TokenType.CONTINUE)) return this.continueStatement()
     return this.expressionStatement()
+  }
+
+  private breakStatement() {
+    let id
+    const keyword = this.previous()
+    if (this.match(TokenType.IDENTIFIER)) {
+      id = this.previous()
+    }
+    this.consume(TokenType.SEMICOLON, "Expected ';' after break statement.")
+    return new BreakStmt(keyword, id)
+  }
+
+  private continueStatement() {
+    let id
+    const keyword = this.previous()
+    if (this.match(TokenType.IDENTIFIER)) {
+      id = this.previous()
+    }
+    this.consume(TokenType.SEMICOLON, "Expected ';' after continue statement.")
+    return new ContinueStmt(keyword, id)
   }
 
   private returnStatement() {
@@ -304,7 +326,18 @@ export class Parser {
       if (!(expr instanceof GetExpression) && !(expr instanceof VariableExpression)) {
         Log.syntaxError(this.previous(), 'Unexpected assignment operator!')
       }
-      expr = new AssignWithOpExpression(expr, this.previous(), this.assignment())
+      if (expr instanceof VariableExpression) {
+        expr = new AssignExpression(
+          expr.name,
+          new BinaryExpression(expr, this.previous(), this.assignment())
+        )
+      }
+      if (expr instanceof GetExpression) {
+        expr = new SetExpression(
+          expr.object, expr.name,
+          new BinaryExpression(expr, this.previous(), this.assignment())
+        )
+      }
     }
 
     return expr

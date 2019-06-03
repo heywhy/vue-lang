@@ -1,5 +1,5 @@
-import { BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression, AssignWithOpExpression } from '../parser/expression'
-import { PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt } from '../parser/statement'
+import { BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
+import { PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt } from '../parser/statement'
 
 export interface ExprVisitor<R> {
   visitSetExpr(expr: SetExpression): R
@@ -16,17 +16,18 @@ export interface ExprVisitor<R> {
   visitTernaryExpr(expr: TernaryExpression): R
   visitVariableExpr(expr: VariableExpression): R
   visitGroupingExpr(expr: GroupingExpression): R
-  visitAssignWithOpExpr(expr: AssignWithOpExpression): R
 }
 
 export interface StmtVisitor<R> {
   visitIfStmt(stmt: IfStmt): R
   visitVarStmt(stmt: VarStmt): R
   visitBlockStmt(stmt: BlockStmt): R
+  visitBreakStmt(stmt: BreakStmt): R
   visitPrintStmt(stmt: PrintStmt): R
   visitClassStmt(stmt: ClassStmt): R
   visitWhileStmt(stmt: WhileStmt): R
   visitReturnStmt(stmt: ReturnStmt): R
+  visitContinueStmt(stmt: ContinueStmt): R
   visitFunctionStmt(stmt: FunctionStmt): R
   visitExpressionStmt(stmt: ExpressionStmt): R
 }

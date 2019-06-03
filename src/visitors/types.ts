@@ -8,3 +8,7 @@ export enum FunctionType {
 export enum ClassType {
   NONE, CLASS, SUBCLASS
 }
+
+export enum LoopType {
+  NONE, LOOP, NESTED_LOOP
+}

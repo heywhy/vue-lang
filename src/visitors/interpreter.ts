@@ -1,10 +1,10 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
-import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression, AssignWithOpExpression } from '../parser/expression'
+import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { Token } from '../tokenizer/token'
-import { RuntimeError, ReturnError } from '../errors'
-import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt } from '../parser/statement'
+import { RuntimeError, ReturnError, BreakStatementError, ContinueStatementError } from '../errors'
+import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt } from '../parser/statement'
 import { Environment } from '../environment'
 import { LangCallable, LangClass, ClassInstance, Callable, NativeFn } from './callable'
 
@@ -87,8 +87,30 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
   }
 
   visitWhileStmt(stmt: WhileStmt) {
-    while (this.isTruthy(this.evaluate(stmt.condition)))
-      this.execute(stmt.body)
+    try {
+      while (this.isTruthy(this.evaluate(stmt.condition))) {
+        try {
+          this.execute(stmt.body)
+        } catch (e) {
+          if (e instanceof ContinueStatementError) {
+            continue
+          } else {
+            throw e
+          }
+        }
+      }
+    } catch (e) {
+      if (!(e instanceof BreakStatementError))
+        throw e
+    }
+  }
+
+  visitContinueStmt(stmt: ContinueStmt) {
+    throw new ContinueStatementError()
+  }
+
+  visitBreakStmt(stmt: BreakStmt) {
+    throw new BreakStatementError()
   }
 
   visitBlockStmt(stmt: BlockStmt) {
@@ -230,28 +252,6 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     return null as any
   }
 
-  visitAssignWithOpExpr(expr: AssignWithOpExpression) {
-    if (expr.left instanceof VariableExpression) {
-      return this.visitAssignExpr(
-        new AssignExpression(
-          expr.left.name,
-          new BinaryExpression(expr.left, expr.operator, expr.value)
-        )
-      )
-    }
-    if (expr.left instanceof GetExpression) {
-      const {left} = expr
-      return this.visitSetExpr(
-        new SetExpression(
-          left.object, left.name,
-          new BinaryExpression(expr.left, expr.operator, expr.value)
-        )
-      )
-    }
-    console.log(expr)
-    return null as any
-  }
-
   visitBinaryExpr(expr: BinaryExpression) {
     const left = this.evaluate(expr.left)
     const right = this.evaluate(expr.right)
@@ -321,7 +321,7 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     const previous = this.environment
     try {
       this.environment = environment
-      statements.forEach(stmt => this.execute(stmt))
+      statements.forEach(this.execute.bind(this))
     } finally {
       this.environment = previous
     }
