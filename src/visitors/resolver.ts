@@ -1,11 +1,12 @@
 import { ExprVisitor, StmtVisitor } from './visitor'
 import { Interpreter } from './interpreter'
-import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt, BreakStmt, ContinueStmt } from '../parser/statement'
+import { BlockStmt, Statement, VarStmt, FunctionStmt, ExpressionStmt, IfStmt, PrintStmt, ReturnStmt, WhileStmt, ClassStmt, BreakStmt, ContinueStmt, ImportStmt, ExposeStmt } from '../parser/statement'
 import { Expression, VariableExpression, AssignExpression, BinaryExpression, CallExpression, GroupingExpression, LiteralExpression, LogicalExpression, UnaryExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
 import { Token } from '../tokenizer/token'
 import { Stack } from '../utils/stack'
 import { Log } from '../tokenizer/logger'
 import { FunctionType, ClassType, LoopType } from './types'
+import { Compiler } from '../compiler';
 
 export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   private readonly scopes: Stack<Map<string, boolean>> = new Stack()
@@ -13,7 +14,25 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   private currentClass: ClassType = ClassType.NONE
   private currentLoop: LoopType = LoopType.NONE
 
-  constructor(private readonly interpreter: Interpreter) { }
+  constructor(
+    private readonly compiler: Compiler,
+    private readonly interpreter: Interpreter,
+    private readonly path: string) { }
+
+  visitImportStmt(stmt: ImportStmt) {
+    const mod = this.compiler.getExports(stmt.exposes, stmt.path, this.path,)
+    stmt.exposes.forEach(name => {
+      if (!mod.has(name.lexeme)) {
+        Log.syntaxError(name, `Variable ${name.lexeme} not exposed by ${this.compiler.getPath(stmt.path)}`)
+      }
+      this.declare(name)
+      this.define(name)
+    })
+  }
+
+  visitExposeStmt(stmt: ExposeStmt) {
+    this.compiler.addExports(this.path, stmt.expose)
+  }
 
   visitClassStmt(stmt: ClassStmt) {
     const enclosingClass = this.currentClass

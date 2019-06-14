@@ -6,6 +6,14 @@ export class Environment {
 
   constructor(public readonly enclosing?: Environment) {}
 
+  merge(env: Environment, expose: string[]) {
+    env.values.forEach((v: any, k: string) => {
+      if (expose.includes(k)) {
+        this.define(k, v)
+      }
+    })
+  }
+
   define(name: string, value: any) {
     this.values.set(name, value)
   }

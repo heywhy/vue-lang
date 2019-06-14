@@ -1,19 +1,20 @@
 import * as path from 'path'
 import commander from 'commander'
 import { generateAst } from './ast-generator'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync } from 'fs'
 import { createInterface } from 'readline'
 import { Scanner } from '../tokenizer/scanner'
 import { Parser } from '../parser/parser'
 import { Interpreter } from '../visitors/interpreter'
 import { Resolver } from '../visitors/resolver'
 import { Log } from '../tokenizer/logger'
-import { ExpressionStmt, PrintStmt } from '../parser/statement';
+import { ExpressionStmt, PrintStmt } from '../parser/statement'
+import { Compiler } from '../compiler'
 
 let interpreter: Interpreter
 let resolver: Resolver
 
-function run(code: string, repl: boolean) {
+function run(code: string, repl: boolean, currentPath: string) {
   const scanner = new Scanner(code)
   const parser = new Parser(scanner.scanTokens())
   const stmts = parser.parse().map(stmt =>{
@@ -24,7 +25,7 @@ function run(code: string, repl: boolean) {
   })
   if (Log.hadError) return
   interpreter = interpreter || new Interpreter()
-  resolver = resolver || new Resolver(interpreter)
+  resolver = resolver || new Resolver(new Compiler(currentPath, []), interpreter, currentPath)
   resolver.resolve(stmts)
   if (Log.hadError) return
   // console.log(stmts)
@@ -51,8 +52,9 @@ commander.command('run <file>')
       console.error(`${file} does not exist`)
       process.exit(1)
     }
-    const content = readFileSync(file).toString()
-    run(content, false)
+    const compiler = new Compiler(process.cwd(), [file])
+
+    compiler.compileAndRun()
 
     if (Log.hadError) process.exit(65)
     if (Log.hadRuntimeError) process.exit(70)
@@ -75,7 +77,7 @@ commander.command('repl')
         readline.close()
         return
       }
-      run(line, true)
+      run(line, true, process.cwd())
       Log.hadError = false
       readline.prompt()
     })

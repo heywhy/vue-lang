@@ -10,12 +10,14 @@ export class Scanner {
   private current: number = 0
   private line: number = 1
   private column: number = 1
+  private scanned = false;
 
   constructor(source: string) {
     this.source = source
   }
 
   scanTokens(): Token[] {
+    if (this.scanned) return this.tokens
     while (!this.isAtEnd()) {
       // We are at the beginning of the next lexeme.
       this.start = this.current
@@ -23,6 +25,7 @@ export class Scanner {
     }
 
     this.tokens.push(new Token(TokenType.EOF, '', null, this.line, this.column))
+    this.scanned = true
     return this.tokens
   }
 

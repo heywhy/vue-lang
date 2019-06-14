@@ -1,5 +1,5 @@
 import { Expression, VariableExpression } from './expression'
-import { StmtVisitor } from '../visitors/visitor'
+import { StmtVisitor, ModuleContextVisitor } from '../visitors/visitor'
 import { Token } from '../tokenizer/token'
 
 export abstract class Statement {
@@ -159,5 +159,26 @@ export class ContinueStmt extends Statement {
 
   accept<R>(visitor: StmtVisitor<R>): R {
     return visitor.visitContinueStmt(this)
+  }
+}
+
+export class ImportStmt extends Statement {
+
+  constructor(public path: string, public exposes: Token[]) {
+    super()
+  }
+
+  accept<R>(visitor: ModuleContextVisitor<R>): R {
+    return visitor.visitImportStmt(this)
+  }
+}
+
+export class ExposeStmt extends Statement {
+  constructor(public readonly expose: Token, public readonly stmt?: Statement) {
+    super()
+  }
+
+  accept<R>(visitor: ModuleContextVisitor<R>): R {
+    return visitor.visitExposeStmt(this)
   }
 }

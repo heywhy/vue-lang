@@ -2,6 +2,7 @@ program        -> declaration* EOF ;
 declaration    -> classDecl
                | funDecl
                | varDecl
+               | exposeDecl
                | statement ;
 
 classDecl      -> "class" IDENTIFIER ( "<" IDENTIFIER )?
@@ -9,6 +10,7 @@ classDecl      -> "class" IDENTIFIER ( "<" IDENTIFIER )?
 funDecl        -> "fun" function ;
 fieldDecl      -> IDENTIFIER ( ":" IDENTIFIER )? ( "=" expression )? ";" ;
 varDecl        -> "var" IDENTIFIER ( ":" IDENTIFIER )? ( "=" expression )? ";" ;
+exposeDecl     -> "expose" IDENTIFIER ";" ;
 statement      -> exprStmt
                | forStmt
                | ifStmt
@@ -17,6 +19,7 @@ statement      -> exprStmt
                | whileStmt
                | block ;
 
+importStmt     -> "import" ( "exposes" "(" parameters ")" ) * ";" ;
 exprStmt       -> expression ";" ;
 forStmt        -> "for" "(" ( varDecl | exprStmt | ";" )
                            expression? ";"

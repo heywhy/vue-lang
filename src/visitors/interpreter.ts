@@ -1,14 +1,14 @@
-import { ExprVisitor, StmtVisitor } from './visitor'
+import { ExprVisitor, ModuleContextVisitor } from './visitor'
 import { LiteralExpression, BinaryExpression, Expression, GroupingExpression, UnaryExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { Token } from '../tokenizer/token'
 import { RuntimeError, ReturnError, BreakStatementError, ContinueStatementError } from '../errors'
-import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt } from '../parser/statement'
+import { ExpressionStmt, PrintStmt, Statement, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt, ExposeStmt, ImportStmt } from '../parser/statement'
 import { Environment } from '../environment'
 import { LangCallable, LangClass, ClassInstance, Callable, NativeFn } from './callable'
 
-export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
+export class Interpreter implements ExprVisitor<Object>, ModuleContextVisitor<void> {
   public readonly globals = new Environment()
   private environment = this.globals
   private readonly locals: Map<Expression, number> = new Map()
@@ -29,6 +29,16 @@ export class Interpreter implements ExprVisitor<Object>, StmtVisitor<void> {
     } catch (err) {
       Log.runtimeError(err)
     }
+  }
+
+  visitExposeStmt(stmt: ExposeStmt) {
+    if (stmt.stmt != null) {
+      this.execute(stmt.stmt)
+    }
+  }
+
+  visitImportStmt(stmt: ImportStmt) {
+
   }
 
   visitClassStmt(stmt: ClassStmt) {

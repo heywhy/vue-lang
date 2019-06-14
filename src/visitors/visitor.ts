@@ -1,5 +1,5 @@
 import { BinaryExpression, UnaryExpression, LiteralExpression, GroupingExpression, VariableExpression, AssignExpression, LogicalExpression, CallExpression, GetExpression, SetExpression, ThisExpression, SuperExpression, TernaryExpression, CommaExpression } from '../parser/expression'
-import { PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt } from '../parser/statement'
+import { PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt, ImportStmt, ExposeStmt } from '../parser/statement'
 
 export interface ExprVisitor<R> {
   visitSetExpr(expr: SetExpression): R
@@ -30,4 +30,9 @@ export interface StmtVisitor<R> {
   visitContinueStmt(stmt: ContinueStmt): R
   visitFunctionStmt(stmt: FunctionStmt): R
   visitExpressionStmt(stmt: ExpressionStmt): R
+}
+
+export interface ModuleContextVisitor<R> extends StmtVisitor<R> {
+  visitExposeStmt(stmt: ExposeStmt): R
+  visitImportStmt(stmt: ImportStmt): R
 }

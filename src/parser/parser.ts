@@ -3,7 +3,7 @@ import { Expression, BinaryExpression, UnaryExpression, LiteralExpression, Group
 import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { ParseError } from '../errors'
-import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt } from './statement'
+import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt, ImportStmt, ExposeStmt } from './statement'
 
 export class Parser {
 
@@ -21,6 +21,8 @@ export class Parser {
 
   private declaration() {
     try {
+
+      if (this.match(TokenType.EXPOSE)) return this.exposeDeclaration()
       if (this.match(TokenType.CLASS)) return this.classDeclaration()
       if (this.match(TokenType.FUN)) return this.functionDeclaration('function')
       if (this.match(TokenType.VAR)) return this.varDeclaration()
@@ -37,7 +39,7 @@ export class Parser {
     let fields: Statement[] = []
     const staticFields: Statement[] = []
 
-    let superClass: VariableExpression
+    let superClass: VariableExpression|undefined
     if (this.match(TokenType.LESS)) {
       this.consume(TokenType.IDENTIFIER, 'Expect superclass name')
       superClass = new VariableExpression(this.previous())
@@ -173,6 +175,7 @@ export class Parser {
 
   private statement() {
 
+    if (this.match(TokenType.IMPORT)) return this.importStatement()
     if (this.match(TokenType.FOR)) return this.forStatement()
     if (this.match(TokenType.WHILE)) return this.whileStatement()
     if (this.match(TokenType.IF)) return this.ifStatement()
@@ -182,6 +185,45 @@ export class Parser {
     if (this.match(TokenType.BREAK)) return this.breakStatement()
     if (this.match(TokenType.CONTINUE)) return this.continueStatement()
     return this.expressionStatement()
+  }
+
+  private exposeDeclaration() {
+    const decl = this.declaration() as Statement
+
+    if (decl instanceof ExpressionStmt && decl.expression instanceof VariableExpression) {
+      return new ExposeStmt(decl.expression.name, decl)
+    }
+    if (decl instanceof FunctionStmt || decl instanceof VarStmt || decl instanceof ClassStmt) {
+      return new ExposeStmt(decl.name, decl)
+    }
+
+
+    return this.error(this.previous(), 'Only variables, functions and classes that can be exposed.')
+  }
+
+
+  private importStatement() {
+    const path = this.primary() as LiteralExpression
+    if (!(path instanceof LiteralExpression)) {
+      Log.syntaxError(this.previous(), 'Expected module path.')
+    }
+
+    const exposes: Token[] = []
+    if (this.match(TokenType.EXPOSE)) {
+      const exposeToken = this.previous()
+      this.consume(TokenType.LEFT_PAREN, `Expect '(' after expose keyword.`)
+      if (!this.check(TokenType.RIGHT_PAREN)) {
+        do {
+          exposes.push(this.consume(TokenType.IDENTIFIER, 'Expect identifier name.'))
+        } while (this.match(TokenType.COMMA))
+        this.consume(TokenType.RIGHT_PAREN, "Expect ')' after imported identifiers.")
+      } else {
+        Log.syntaxError(exposeToken, 'Expect identifiers to be imported from specified module!')
+      }
+    }
+    this.consume(TokenType.SEMICOLON, "Expect ';' after import statement.")
+
+    return new ImportStmt(path.value, exposes)
   }
 
   private breakStatement() {
@@ -494,7 +536,9 @@ export class Parser {
       this.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
       return new GroupingExpression(expr)
     }
-    throw this.error(this.peek(), 'Expect expression.')
+    const msg = this.previous().type === TokenType.IMPORT
+      ? 'path' : 'expression'
+    throw this.error(this.peek(), `Expect ${msg}.`)
   }
 
   private synchronize() {

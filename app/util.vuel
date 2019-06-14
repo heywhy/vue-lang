@@ -1,0 +1,13 @@
+expose fun name() {
+  return "killer";
+}
+
+class App {
+  static call() {
+    print "hello amaker";
+  }
+}
+
+expose var names = "as";
+
+expose App;
