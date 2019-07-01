@@ -35,7 +35,7 @@ export class LangCallable extends Callable {
   constructor(
     private readonly declaration: FunctionStmt,
     private readonly closure: Environment,
-    private readonly isInitializer: boolean) {
+    public readonly isInitializer: boolean) {
     super()
   }
 
@@ -93,7 +93,7 @@ export class LangClass extends Callable {
   invoke(interpreter: Interpreter, args: any[]) {
     const instance = new ClassInstance(this)
     const initializer: LangCallable = this.findField(this.name) as any
-    if (initializer != null) {
+    if (initializer != null && initializer.isInitializer) {
       initializer.bind(instance).invoke(interpreter, args)
     }
     return instance

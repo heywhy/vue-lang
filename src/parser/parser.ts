@@ -37,8 +37,7 @@ export class Parser {
   private classDeclaration() {
     const name = this.consume(TokenType.IDENTIFIER, 'Expect class name.')
     let fields: Statement[] = []
-    const staticFields: Statement[] = []
-
+    let classFields: Statement[] = []
     let superClass: VariableExpression|undefined
     if (this.match(TokenType.LESS)) {
       this.consume(TokenType.IDENTIFIER, 'Expect superclass name')
@@ -50,14 +49,14 @@ export class Parser {
     let construct: FunctionStmt|undefined
     while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
       const isStatic = this.match(TokenType.STATIC)
-      const stmt = this.fieldDeclaration(name, isStatic)
+      const stmt = this.fieldDeclaration(name, isStatic);
+      (isStatic ? classFields : fields).push(stmt)
       if (stmt instanceof FunctionStmt) {
         if (stmt.name.lexeme === name.lexeme) {
           construct = stmt
         }
-        isStatic ? staticFields.push(stmt) : fields.push(stmt)
-      } else if (stmt instanceof ExpressionStmt) {
-        isStatic ? staticFields.push(stmt) : decls.push(stmt)
+      } else if (!isStatic && stmt instanceof ExpressionStmt && stmt.expression instanceof SetExpression) {
+        decls.push(stmt)
       }
     }
 
@@ -80,13 +79,7 @@ export class Parser {
 
     this.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
-    const staticFns = staticFields
-      .filter(field => field instanceof FunctionStmt)
-    const stmt = new BlockStmt([
-      new ClassStmt(name, superClass!, fields, staticFns),
-      ...staticFields.filter(field => field instanceof ExpressionStmt)
-    ], false)
-    return stmt
+    return new ClassStmt(name, superClass!, fields, classFields)
   }
 
   private fieldDeclaration(className: Token, isStatic: boolean) {

@@ -24,7 +24,7 @@ function run(code: string, repl: boolean, currentPath: string) {
     return stmt
   })
   if (Log.hadError) return
-  interpreter = interpreter || new Interpreter()
+  interpreter = interpreter || new Interpreter(currentPath)
   resolver = resolver || new Resolver(new Compiler(currentPath, []), interpreter, currentPath)
   resolver.resolve(stmts)
   if (Log.hadError) return

@@ -20,7 +20,7 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
     private readonly path: string) { }
 
   visitImportStmt(stmt: ImportStmt) {
-    const mod = this.compiler.getExports(stmt.exposes, stmt.path, this.path,)
+    const mod = this.compiler.getExports(stmt.exposes, stmt.path, this.path)
     stmt.exposes.forEach(name => {
       if (!mod.has(name.lexeme)) {
         Log.syntaxError(name, `Variable ${name.lexeme} not exposed by ${this.compiler.getPath(stmt.path)}`)
@@ -31,7 +31,12 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
   }
 
   visitExposeStmt(stmt: ExposeStmt) {
+    const exports = this.compiler.getExports([], this.path)
+    if (exports && exports.has(stmt.expose.lexeme)) {
+      Log.syntaxError(stmt.expose, `Don't expose already exposed variable.`, this.path)
+    }
     this.compiler.addExports(this.path, stmt.expose)
+    this.resolveStmt(stmt.stmt!)
   }
 
   visitClassStmt(stmt: ClassStmt) {

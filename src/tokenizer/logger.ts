@@ -18,17 +18,16 @@ export class Log {
     return this._hadRuntimeError
   }
 
-  static runtimeError(err: RuntimeError) {
-    // console.error(err)
-    console.error(err.message + '\n[position => ' + err.token.line + ':' + err.token.column + ']')
+  static runtimeError(err: RuntimeError, file?: string) {
+    console.error(`${file ? file + ':' : ''}${err.token.line}:${err.token.column} - ${err.message}`)
     this._hadRuntimeError = true
   }
 
-  static syntaxError(token: Token, message: string) {
+  static syntaxError(token: Token, message: string, file?: string) {
     if (token.type == TokenType.EOF) {
-      this.report(token.line, token.column, ' at end', message)
+      this.report(token.line, token.column, ' at end', message, file)
     } else {
-      this.report(token.line, token.column, ` at '${token.lexeme}'`, message)
+      this.report(token.line, token.column, ` at '${token.lexeme}'`, message, file)
     }
   }
 
@@ -36,8 +35,8 @@ export class Log {
     Log.report(line, column, '', message)
   }
 
-  private static report(line: number, column: number, where: string, message: string) {
-    console.error(`[position => ${line}:${column}] Error${where}: ${message}`)
+  private static report(line: number, column: number, where: string, message: string, file?: string) {
+    console.error(`${file ? file + ':' : ''}${line}:${column} - Error${where}: ${message}`)
     this._hadError = true
   }
 }

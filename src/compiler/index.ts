@@ -6,7 +6,7 @@ import { Log } from '../tokenizer/logger'
 import { Interpreter } from '../visitors/interpreter'
 import { Resolver } from '../visitors/resolver'
 import { Token } from '../tokenizer/token'
-import { Stack } from '../utils/stack';
+import { Stack } from '../utils/stack'
 
 export class Compiler {
 
@@ -30,6 +30,7 @@ export class Compiler {
       const prev = this.interpreters.peek()
       if (prev != null) {
         prev.globals.merge(last.globals, Array.from(imports.map(({lexeme}) => lexeme)!))
+        last.locals.forEach((v, k) => prev.locals.set(k, v))
       }
     }
     return this.exports.get(file) as Set<string>
@@ -66,7 +67,7 @@ export class Compiler {
     const parser = this.getParser(file)
     const stmts = parser.parse()
     if (Log.hadError) return
-    const interpreter = new Interpreter()
+    const interpreter = new Interpreter(file)
     const resolver = new Resolver(this, interpreter, file)
     this.interpreters.push(interpreter)
     resolver.resolve(stmts)

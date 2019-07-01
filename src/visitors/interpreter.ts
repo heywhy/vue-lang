@@ -11,9 +11,9 @@ import { LangCallable, LangClass, ClassInstance, Callable, NativeFn } from './ca
 export class Interpreter implements ExprVisitor<Object>, ModuleContextVisitor<void> {
   public readonly globals = new Environment()
   private environment = this.globals
-  private readonly locals: Map<Expression, number> = new Map()
+  public readonly locals: Map<Expression, number> = new Map()
 
-  constructor() {
+  constructor(private readonly path: string) {
     this.globals.define('clock', new NativeFn(() => {
       return Date.now() / 1000
     }, 'clock'))
@@ -27,7 +27,7 @@ export class Interpreter implements ExprVisitor<Object>, ModuleContextVisitor<vo
     try {
       statements.forEach(stmt => this.execute(stmt))
     } catch (err) {
-      Log.runtimeError(err)
+      Log.runtimeError(err, this.path)
     }
   }
 
@@ -64,10 +64,15 @@ export class Interpreter implements ExprVisitor<Object>, ModuleContextVisitor<vo
         fields.set(stmt1.name.lexeme, callable)
       }
     })
-    stmt.staticFields.forEach(stmt1 => {
+
+    stmt.classFields.forEach(stmt1 => {
       if (stmt1 instanceof FunctionStmt) {
         const callable = new LangCallable(stmt1, this.environment, false)
         staticFields.set(stmt1.name.lexeme, callable)
+        return
+      } else if (stmt1 instanceof ExpressionStmt && stmt1.expression instanceof SetExpression) {
+        const {expression} = stmt1
+        staticFields.set(expression.name.lexeme, this.evaluate(expression.value) as any)
       }
     })
 

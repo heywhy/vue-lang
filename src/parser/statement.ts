@@ -126,7 +126,7 @@ export class ClassStmt extends Statement {
     public readonly name: Token,
     public readonly superclass: VariableExpression,
     public readonly body: Statement[],
-    public readonly staticFields: Statement[]
+    public readonly classFields: Statement[]
   ) {
     super()
   }
