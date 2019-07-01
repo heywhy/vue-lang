@@ -1,8 +1,15 @@
 import "./util" expose (App);
 
-class Bulk < App {}
+class Bulk < App {
+  Bulk() {
+    super("asd");
+  }
 
-print App();
+  lover {
+    return this.love;
+  }
+}
+
 print Bulk.name;
-var app = App();
-print app.love;
+var app = Bulk();
+print app.lover;

@@ -78,7 +78,7 @@ export class Compiler {
   private getParser(file: string) {
     this.parsers.has(file)
       ? this.parsers.get(file)
-      : this.parsers.set(file, new Parser(this.getScanner(file).scanTokens()))
+      : this.parsers.set(file, new Parser(this.getScanner(file).scanTokens(), file))
 
     return this.parsers.get(file) as Parser
   }

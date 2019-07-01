@@ -39,10 +39,12 @@ export class LangCallable extends Callable {
     super()
   }
 
-  invoke(interpreter: Interpreter, args: any[]) {
+  invoke(interpreter: Interpreter, args: any[] = []) {
     const environment = new Environment(this.closure)
-    for (let i = 0; i < this.declaration.params.length; i++) {
-      environment.define(this.declaration.params[i].lexeme, args[i])
+    if (this.declaration.params != null) {
+      for (let i = 0; i < this.declaration.params.length; i++) {
+        environment.define(this.declaration.params[i].lexeme, args[i])
+      }
     }
     try {
       interpreter.executeBlock(this.declaration.body, environment)
@@ -66,8 +68,12 @@ export class LangCallable extends Callable {
     return `<fn ${this.declaration.name.lexeme}>`
   }
 
+  get isGetter() {
+    return this.declaration.isGetter
+  }
+
   get arity() {
-    return this.declaration.params.length
+    return !this.isGetter ? this.declaration.params!.length : 0
   }
 }
 
@@ -92,7 +98,10 @@ export class LangClass extends Callable {
 
   invoke(interpreter: Interpreter, args: any[]) {
     const instance = new ClassInstance(this)
-    const initializer: LangCallable = this.findField(this.name) as any
+    let initializer: LangCallable = this.findField(this.name) as any
+    if (initializer == null && this.superclass != null) {
+      initializer = this.superclass.findField(this.superclass.name) as any
+    }
     if (initializer != null && initializer.isInitializer) {
       initializer.bind(instance).invoke(interpreter, args)
     }

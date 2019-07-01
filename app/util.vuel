@@ -5,6 +5,11 @@ expose fun name() {
 expose class App {
   love = 1290;
   static name = "Loki";
+
+  App(name) {
+    this.love = name;
+  }
+
   static call() {
     print "hello amaker";
   }

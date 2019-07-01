@@ -4,11 +4,14 @@ import { TokenType } from '../tokenizer/token-type'
 import { Log } from '../tokenizer/logger'
 import { ParseError } from '../errors'
 import { Statement, PrintStmt, ExpressionStmt, VarStmt, BlockStmt, IfStmt, WhileStmt, FunctionStmt, ReturnStmt, ClassStmt, BreakStmt, ContinueStmt, ImportStmt, ExposeStmt } from './statement'
+import { FunctionType } from '../visitors/types';
 
 export class Parser {
 
   private current: number = 0
-  constructor(private readonly tokens: Token[]) { }
+  constructor(
+    private readonly tokens: Token[],
+    private readonly path: string) { }
 
   public parse() {
     const statements: Statement[] = []
@@ -24,7 +27,7 @@ export class Parser {
 
       if (this.match(TokenType.EXPOSE)) return this.exposeDeclaration()
       if (this.match(TokenType.CLASS)) return this.classDeclaration()
-      if (this.match(TokenType.FUN)) return this.functionDeclaration('function')
+      if (this.match(TokenType.FUN)) return this.functionDeclaration(FunctionType.FUNCTION)
       if (this.match(TokenType.VAR)) return this.varDeclaration()
 
       return this.statement()
@@ -65,11 +68,10 @@ export class Parser {
       if (!superClass) {
         construct.body.splice(0, 0, ...decls)
       } else if (superClass && exprStmt instanceof ExpressionStmt
-        && exprStmt.expression instanceof CallExpression
-        && exprStmt.expression.callee instanceof SuperExpression) {
+        && this.isSuperCall(exprStmt)) {
         construct.body.splice(1, 0, ...decls)
       } else {
-        return this.error(name, 'Expected super call!')
+        return this.error(construct.name, 'Expected super call!')
       }
     } else {
       construct = new FunctionStmt(name, [], [])
@@ -77,9 +79,22 @@ export class Parser {
       fields.push(construct)
     }
 
+    if (superClass && !this.isSuperCall(construct.body[0])) {
+      return this.error(construct.name, 'Expected constructor with super call!')
+    }
+
     this.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
     return new ClassStmt(name, superClass!, fields, classFields)
+  }
+
+  private isSuperCall(stmt?: Statement) {
+    if (stmt == null) {
+      return false;
+    }
+    return stmt instanceof ExpressionStmt
+      && stmt.expression instanceof CallExpression
+      && stmt.expression.callee instanceof SuperExpression
   }
 
   private fieldDeclaration(className: Token, isStatic: boolean) {
@@ -106,26 +121,33 @@ export class Parser {
       this.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
       return new ExpressionStmt(expr)
     } else {
-      return this.functionDeclaration('method')
+      return this.functionDeclaration(FunctionType.METHOD)
     }
   }
 
-  private functionDeclaration(type: string) {
+  private functionDeclaration(type: FunctionType) {
     const name = this.consume(TokenType.IDENTIFIER, `Expect ${type} name.`)
-    this.consume(TokenType.LEFT_PAREN, `Expect '(' after ${type} name.`)
-    const parameters: Token[] = []
-    if (!this.check(TokenType.RIGHT_PAREN)) {
-      do {
-        if (parameters.length >= 8) {
-          this.error(this.peek(), 'Cannot have more than 8 parameters.')
-        }
+    let parameters: Token[]|null = null
+    if (type != FunctionType.METHOD || this.check(TokenType.LEFT_PAREN)) {
+      this.consume(TokenType.LEFT_PAREN, `Expect '(' after ${type} name.`)
+      parameters = []
+      if (!this.check(TokenType.RIGHT_PAREN)) {
+        do {
+          if (parameters.length >= 8) {
+            this.error(this.peek(), 'Cannot have more than 8 parameters.')
+          }
 
-        parameters.push(this.consume(TokenType.IDENTIFIER, 'Expect parameter name.'))
-      } while (this.match(TokenType.COMMA))
+          parameters.push(this.consume(TokenType.IDENTIFIER, 'Expect parameter name.'))
+        } while (this.match(TokenType.COMMA))
+      }
+      this.consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
     }
-    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
     this.consume(TokenType.LEFT_BRACE, `Expect '{' before ${type} body.`)
     const body = this.block()
+    const last = body[body.length - 1];
+    if (parameters == null && !(last instanceof ReturnStmt)) {
+      Log.syntaxError(name, 'getter is missing a return statement.', this.path)
+    }
     return new FunctionStmt(name, parameters, body)
   }
 
@@ -563,7 +585,7 @@ export class Parser {
   }
 
   private error(token: Token, message: string) {
-    Log.syntaxError(token, message)
+    Log.syntaxError(token, message, this.path)
     return new ParseError()
   }
 

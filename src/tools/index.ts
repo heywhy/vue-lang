@@ -16,7 +16,7 @@ let resolver: Resolver
 
 function run(code: string, repl: boolean, currentPath: string) {
   const scanner = new Scanner(code)
-  const parser = new Parser(scanner.scanTokens())
+  const parser = new Parser(scanner.scanTokens(), currentPath)
   const stmts = parser.parse().map(stmt =>{
     if (stmt instanceof ExpressionStmt && repl) {
       return new PrintStmt(stmt.expression)

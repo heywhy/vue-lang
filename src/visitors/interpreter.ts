@@ -206,7 +206,12 @@ export class Interpreter implements ExprVisitor<Object>, ModuleContextVisitor<vo
   visitGetExpr(expr: GetExpression) {
     const ob = this.evaluate(expr.object)
     if (ob instanceof ClassInstance) {
-      return ob.get(expr.name)
+      let res = ob.get(expr.name)
+      if (res instanceof LangCallable && res.isGetter) {
+        res = res.invoke(this)
+      }
+
+      return res
     }
     if (ob instanceof LangClass) {
       return ob.get(expr.name)

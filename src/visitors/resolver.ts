@@ -200,7 +200,7 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
 
   visitCallExpr(expr: CallExpression) {
     this.resolveExpr(expr.callee)
-    expr.args.forEach(arg => this.resolveExpr(arg))
+    expr.args.forEach(this.resolveExpr.bind(this))
   }
 
   visitGroupingExpr(expr: GroupingExpression) {
@@ -227,10 +227,12 @@ export class Resolver implements ExprVisitor<void>, StmtVisitor<void> {
     this.currentFunction = type
 
     this.beginScope()
-    fun.params.forEach(param => {
-      this.declare(param)
-      this.define(param)
-    })
+    if (fun.params != null) {
+      fun.params.forEach(param => {
+        this.declare(param)
+        this.define(param)
+      })
+    }
     this.resolve(fun.body)
     this.endScope()
     this.currentFunction = enclosingFunction

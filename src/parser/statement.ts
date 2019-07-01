@@ -96,11 +96,15 @@ export class ForStmt extends Statement {
 export class FunctionStmt extends Statement {
   constructor(
     public readonly name: Token,
-    public readonly params: Token[],
+    public readonly params: Token[]|null,
     public readonly body: Statement[],
     public readonly isStatic?: boolean
   ) {
     super()
+  }
+
+  get isGetter() {
+    return this.params == null
   }
 
   accept<R>(visitor: StmtVisitor<R>): R {

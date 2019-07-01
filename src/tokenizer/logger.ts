@@ -27,7 +27,7 @@ export class Log {
     if (token.type == TokenType.EOF) {
       this.report(token.line, token.column, ' at end', message, file)
     } else {
-      this.report(token.line, token.column, ` at '${token.lexeme}'`, message, file)
+      this.report(token.line, token.column, ` at ${token.lexeme}`, message, file)
     }
   }
 
